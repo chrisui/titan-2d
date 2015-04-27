@@ -1,0 +1,37 @@
+{
+  "name": "titan-2d",
+  "version": "0.0.1",
+  "description": "2d Javascript Game Engine",
+  "main": "lib",
+  "directories": {
+    "doc": "docs"
+  },
+  "devDependencies": {
+    "babel-core": "^4.7.16",
+    "babel-loader": "^4.3.0",
+    "prompt": "^0.2.14",
+    "webpack": "^1.7.3"
+  },
+  "dependencies": {},
+  "peerDependencies": {},
+  "scripts": {
+    "test": "scripts/test",
+    "build-global": "scripts/build-global",
+    "build-npm": "scripts/build-npm"
+  },
+  "author": "Chris Pearce <hello@chrispearce.me> (chrispearce.co)",
+  "license": "MIT",
+  "keywords": [
+    "2d",
+    "game",
+    "engine",
+    "framework"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chrisui/titan-2d.git"
+  },
+  "homepage": "https://github.com/chrisui/titan-2d",
+  "bugs": "https://github.com/chrisui/titan-2d/issues",
+  "globalExport": "OS"
+}
