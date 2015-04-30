@@ -36,7 +36,12 @@ module.exports = {
   resolve: {
     root: [libDir],
     extensions: ['', '.js', '.jsx'],
-    modulesDirectories: ['node_modules']
+    modulesDirectories: ['modules', 'node_modules'],
+    alias: {
+      'matter': 'matter-js/build/matter',
+      //'pixi': 'pixi.js/bin/pixi'
+      'pixi': 'pixi-2/pixi'
+    }
   },
   plugins: plugins
 };

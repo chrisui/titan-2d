@@ -11,8 +11,15 @@ A few core points to constantly refer to as this framework evolves. Some broad; 
 ### Functional
 Functional programming is taking off in a big way and for very good reasons. This way of writing code can force simplicity and real modularity which can prevent headaches in the long run.
 
+Some key points in this area:
+
+1. Immutability might be a bit *too* much of an ask in terms of performance sacrifice
+2. The mutative functional approach of matter-js is okay ???
+
 ### Reactive
 Reactive programming is helping developers manage asynchronous state change in beautiful ways. Considering games are a massive cluster of continuous state change it makes sense to tackle the complications of this from the ground up in the core of the framework.
+
+Streams could be an incredibly useful way of sharing game change across areas of code. Ie. imagine a stream of keyboard/controller input or a stream of collisions.
 
 ### Simplicity first, scoped for performance later
 The ability for everyone to jump on board and achieve output with ease far outweighs the 10% which need the edge performance. With the ultimate simplicity and the correct level of modularity we can add layers of performance optimisations which will add complexity while not hurting the initial simplicity.
@@ -34,3 +41,13 @@ Considering the wide range of possible usages of a game engine it is important t
 Every feature of a game engine should be flexible to the degree it can be completely re-shaped by the consuming developers. With such a wide range of outputs this is particularly important.
 
 To aid in onboarding the framework should expose first-class support for common libraries handling all kind of aspects. Having a nice plugin api is therefore essential.
+
+### A few others
+- Strong no-bullshit JS (ES6) from the ground up - play to it's strengths
+	- The idea of macros and language transpilation is not out the question in the long run if it is super easy to run (babel plugins???)
+- Don't reinvent the wheel - reuse what is available
+	- Reusing what is available can help develop a solid plugin spec to allow for even more flexibility down the line
+
+Inspiration
+-----------
+- Impact JS for it's initial developer accessibility
