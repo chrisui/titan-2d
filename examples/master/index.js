@@ -10,7 +10,7 @@ export function render(renderTo) {
   const FRAME = 1000 / FPS;
 
   var renderOptions = {};
-  renderOptions.wireframes = true;
+  renderOptions.wireframes = false;
   renderOptions.hasBounds = false;
   renderOptions.showDebug = true;
   renderOptions.showBroadphase = false;
@@ -39,7 +39,8 @@ export function render(renderTo) {
   var engine = Engine.create({
     render: {
       element: renderTo,
-      options: renderOptions
+      options: renderOptions,
+      controller: RenderPixi
     },
     world: worldOptions,
     enableSleeping: true,
