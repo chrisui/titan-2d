@@ -74,16 +74,16 @@
 	
 	var Input = _interopRequire(__webpack_require__(6));
 	
-	var _matter = __webpack_require__(8);
+	var _matter = __webpack_require__(9);
 	
 	var World = _matter.World;
 	var Bodies = _matter.Bodies;
 	var Body = _matter.Body;
 	var Vector = _matter.Vector;
 	
-	var Mousetrap = _interopRequire(__webpack_require__(11));
+	var Mousetrap = _interopRequire(__webpack_require__(8));
 	
-	var values = _interopRequire(__webpack_require__(9));
+	var values = _interopRequire(__webpack_require__(10));
 	
 	function render(renderTo) {
 	
@@ -94,39 +94,63 @@
 	  });
 	
 	  var player = Bodies.circle(100, 100, 30, { restitution: 0.6, friction: 0.1 });
+	  var crosshairs = Bodies.circle(300, 300, 5, { isStatic: true });
+	
+	  World.add(engine.world, [player, crosshairs]);
 	
 	  var offset = 5;
 	  World.add(engine.world, [Bodies.rectangle(400, -offset, 800.5 + 2 * offset, 50.5, { isStatic: true }), Bodies.rectangle(400, 600 + offset, 800.5 + 2 * offset, 50.5, { isStatic: true }), Bodies.rectangle(800 + offset, 300, 50.5, 600.5 + 2 * offset, { isStatic: true }), Bodies.rectangle(-offset, 300, 50.5, 600.5 + 2 * offset, { isStatic: true })]);
 	
-	  World.add(engine.world, [player]);
+	  var jump = Input.create(null, [Input.KEYBOARD_UP, Input.KEYBOARD_W, Input.GAMEPAD_A]);
+	  var runRight = Input.create(null, [Input.KEYBOARD_RIGHT, Input.KEYBOARD_D, Input.GAMEPAD_L_RIGHT]);
+	  var runLeft = Input.create(null, [Input.KEYBOARD_LEFT, Input.KEYBOARD_A, Input.GAMEPAD_L_LEFT]);
+	  var aimUp = Input.create(null, [Input.GAMEPAD_R_UP]);
+	  var aimRight = Input.create(null, [Input.GAMEPAD_R_RIGHT]);
+	  var aimDown = Input.create(null, [Input.GAMEPAD_R_DOWN]);
+	  var aimLeft = Input.create(null, [Input.GAMEPAD_R_LEFT]);
+	  var toggleTime = Input.create(null, [Input.GAMEPAD_X]);
 	
-	  var jump = Input.create(null, [Input.KEYBOARD_UP, Input.GAMEPAD_A]);
-	  var runRight = Input.create(null, [Input.KEYBOARD_RIGHT, Input.GAMEPAD_L_RIGHT]);
-	  var runLeft = Input.create(null, [Input.KEYBOARD_LEFT, Input.GAMEPAD_L_LEFT]);
+	  var AIM_SENSITIVITY = 10;
+	  var RUN_FORCE = 0.01;
+	  var JUMP_FORCE = 0.1;
+	  var RUN_THRESHOLD = 5;
+	  var JUMP_THRESHOLD = 3;
+	  var Y_TO_MOVE_THRESHOLD = 0.5;
+	
+	  var canJump = true;
 	
 	  Engine.run(engine, function () {
 	
-	    if (jump.value && player.velocity.y < 10) {
-	      Body.applyForce(player, Vector.sub(player.position, { x: player.position.y, y: player.position.y + 15 }), { x: 0, y: -0.02 });
+	    if (jump.value && Math.abs(player.velocity.y) < JUMP_THRESHOLD && jump.hasChanged) {
+	      Body.applyForce(player, Vector.sub(player.position, { x: player.position.y, y: player.position.y + 15 }), { x: 0, y: -JUMP_FORCE * jump.value });
 	    }
 	
-	    if (runRight.value && player.velocity.x < 10) {
-	      Body.applyForce(player, Vector.sub(player.position, { x: player.position.x - 15, y: player.position.y }), { x: 0.01, y: 0 });
+	    if (runRight.value && player.velocity.x < RUN_THRESHOLD) {
+	      Body.applyForce(player, Vector.sub(player.position, { x: player.position.x - 15, y: player.position.y }), { x: RUN_FORCE * runRight.value, y: 0 });
 	    }
 	
-	    if (runLeft.value && player.velocity.x > -10) {
-	      Body.applyForce(player, Vector.sub(player.position, { x: player.position.x + 15, y: player.position.y }), { x: -0.01, y: 0 });
+	    if (runLeft.value && player.velocity.x > -RUN_THRESHOLD) {
+	      Body.applyForce(player, Vector.sub(player.position, { x: player.position.x + 15, y: player.position.y }), { x: -RUN_FORCE * runLeft.value, y: 0 });
 	    }
 	
-	    if (engine.runner.frameCount % 20 === 0) {
+	    if (aimUp.value) {
+	      Body.translate(crosshairs, { x: 0, y: -AIM_SENSITIVITY * aimUp.value });
+	    }
 	
-	      var gamepads = navigator.getGamepads();
-	      values(gamepads).filter(function (pad) {
-	        return pad && pad.axes;
-	      }).forEach(function (pad, i) {
-	        return console.log(i, pad.axes[0], pad.axes[1], pad.axes[2], pad.axes[3]);
-	      });
-	      //values(gamepads).filter(pad => pad && pad.buttons).forEach((pad, padI) => pad.buttons.forEach((but, butI) => console.log(padI, butI, but.pressed, but.value)));
+	    if (aimRight.value) {
+	      Body.translate(crosshairs, { x: AIM_SENSITIVITY * aimRight.value, y: 0 });
+	    }
+	
+	    if (aimDown.value) {
+	      Body.translate(crosshairs, { x: 0, y: AIM_SENSITIVITY * aimDown.value });
+	    }
+	
+	    if (aimLeft.value) {
+	      Body.translate(crosshairs, { x: -AIM_SENSITIVITY * aimLeft.value, y: 0 });
+	    }
+	
+	    if (toggleTime.value && toggleTime.hasChanged) {
+	      engine.timeScale = engine.timeScale === 1 ? 0.1 : 1;
 	    }
 	  });
 	
@@ -168,7 +192,7 @@
 /* 3 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(10)();
+	exports = module.exports = __webpack_require__(14)();
 	exports.push([module.id, "* {\n  box-sizing: border-box;\n}\n\nbody {\n  font-family: \"Helvetica Neue\", Arial, sans-serif;\n  margin: 0;\n}\n\ncanvas {\n  position: absolute;\n}", ""]);
 
 /***/ },
@@ -179,27 +203,27 @@
 	
 	var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 	
-	var assign = _interopRequire(__webpack_require__(12));
+	var assign = _interopRequire(__webpack_require__(11));
 	
-	var _matter = __webpack_require__(8);
+	var _matter = __webpack_require__(9);
 	
-	var Engine = _matter.Engine;
+	var MatterEngine = _matter.Engine;
 	var RenderPixi = _matter.RenderPixi;
 	
-	var World = _interopRequire(__webpack_require__(13));
+	var World = _interopRequire(__webpack_require__(12));
 	
 	var Entity = _interopRequire(__webpack_require__(5));
 	
-	var Runner = _interopRequire(__webpack_require__(14));
+	var Runner = _interopRequire(__webpack_require__(13));
 	
 	var _Input = __webpack_require__(6);
 	
 	var observeInput = _Input.observe;
 	var updateInput = _Input.update;
 	
-	var GameEngine = {};
+	var Engine = {};
 	
-	GameEngine.create = function () {
+	Engine.create = function () {
 	  var state = arguments[0] === undefined ? {} : arguments[0];
 	
 	  var engine = assign({
@@ -209,7 +233,7 @@
 	
 	  engine.world = World.create(engine.world);
 	
-	  engine.physics = Engine.create(engine.physics);
+	  engine.physics = MatterEngine.create(engine.physics);
 	  engine.physics.world = engine.world;
 	
 	  engine.render = RenderPixi.create(engine.render);
@@ -217,7 +241,7 @@
 	  return engine;
 	};
 	
-	GameEngine.update = function (engine, deltaTime, correction) {
+	Engine.update = function (engine, deltaTime, correction) {
 	  var entities = World.allEntities(engine.world);
 	  var numEntities = entities.length;
 	
@@ -227,16 +251,17 @@
 	    Entity.update(entities[i], deltaTime, engine.timeScale, correction);
 	  }
 	
-	  Engine.update(engine.physics, deltaTime, correction);
+	  engine.physics.timing.timeScale = engine.timeScale;
+	  MatterEngine.update(engine.physics, deltaTime, correction);
 	};
 	
-	GameEngine.run = function (engine, tick) {
+	Engine.run = function (engine, tick) {
 	  engine.runner = Runner.create(null, function (delta, correction) {
 	    if (tick) {
 	      tick(delta, correction);
 	    }
 	
-	    GameEngine.update(engine, delta, correction);
+	    Engine.update(engine, delta, correction);
 	
 	    RenderPixi.world(engine);
 	  });
@@ -244,11 +269,11 @@
 	  observeInput();
 	};
 	
-	GameEngine.stop = function (engine) {
+	Engine.stop = function (engine) {
 	  Runner.destroy(engine.runner);
 	};
 	
-	module.exports = GameEngine;
+	module.exports = Engine;
 
 /***/ },
 /* 5 */
@@ -258,9 +283,9 @@
 	
 	var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 	
-	var assign = _interopRequire(__webpack_require__(12));
+	var assign = _interopRequire(__webpack_require__(11));
 	
-	var Composite = __webpack_require__(8).Composite;
+	var Composite = __webpack_require__(9).Composite;
 	
 	var Entity = {};
 	
@@ -297,7 +322,7 @@
 	  value: true
 	});
 	
-	var assign = _interopRequire(__webpack_require__(12));
+	var assign = _interopRequire(__webpack_require__(11));
 	
 	/**
 	 * This is a quick drop in file which may have to be changed later to fit our needs.
@@ -345,6 +370,7 @@
 	  var threshold = 0;
 	  var gamepad = null;
 	
+	  input.oldValue = input.value;
 	  input.value = 0;
 	
 	  while (i-- > 0) {
@@ -511,6 +537,12 @@
 	  if (input.value < value) {
 	    input.value = value;
 	  }
+	
+	  if (input.oldValue !== input.value) {
+	    input.hasChanged = true;
+	  } else {
+	    input.hasChanged = false;
+	  }
 	}
 	
 	// Updates the pointer values.
@@ -618,7 +650,7 @@
 	    pointerPressed(event.clientX, event.clientY, 0);
 	  }
 	
-	  killEvent(event);
+	  //killEvent( event );
 	}
 	
 	// Called when a mouse button is released.
@@ -629,7 +661,7 @@
 	    pointerReleased();
 	  }
 	
-	  killEvent(event);
+	  //killEvent( event );
 	}
 	
 	// Called when a mouse is moused.
@@ -638,7 +670,7 @@
 	
 	  pointerMoved(event.clientX, event.clientY);
 	
-	  killEvent(event);
+	  //killEvent( event );
 	}
 	
 	// Called when a touch-screen is pressed.
@@ -651,7 +683,7 @@
 	    pointerPressed(touch.clientX, touch.clientY, touch.identifier);
 	  }
 	
-	  killEvent(event);
+	  //killEvent( event );
 	}
 	
 	// Called when a touch-screen is released.
@@ -679,7 +711,7 @@
 	    }
 	  }
 	
-	  killEvent(event);
+	  //killEvent( event );
 	}
 	
 	// Called when a touch-point is moved.
@@ -707,21 +739,21 @@
 	    }
 	  }
 	
-	  killEvent(event);
+	  //killEvent( event );
 	}
 	
 	// Called when a keyboard key is pressed.
 	function onKeyDown(event) {
 	  __keyboard[event.keyCode] = true;
 	
-	  killEvent(event);
+	  //killEvent( event );
 	}
 	
 	// Called when a keyboard key is released.
 	function onKeyUp(event) {
 	  __keyboard[event.keyCode] = false;
 	
-	  killEvent(event);
+	  //killEvent( event );
 	}
 	
 	// Mouse listeners.
@@ -772,7 +804,8 @@
 	GameInput.create = function (state, channels) {
 	  var input = assign({
 	    value: 0,
-	    enabled: true
+	    enabled: true,
+	    changed: false
 	  }, state);
 	
 	  for (var i = 0; i < channels.length; ++i) {
@@ -1175,6 +1208,1033 @@
 
 /***/ },
 /* 8 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_RESULT__;/*global define:false */
+	/**
+	 * Copyright 2015 Craig Campbell
+	 *
+	 * Licensed under the Apache License, Version 2.0 (the "License");
+	 * you may not use this file except in compliance with the License.
+	 * You may obtain a copy of the License at
+	 *
+	 * http://www.apache.org/licenses/LICENSE-2.0
+	 *
+	 * Unless required by applicable law or agreed to in writing, software
+	 * distributed under the License is distributed on an "AS IS" BASIS,
+	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	 * See the License for the specific language governing permissions and
+	 * limitations under the License.
+	 *
+	 * Mousetrap is a simple keyboard shortcut library for Javascript with
+	 * no external dependencies
+	 *
+	 * @version 1.5.2
+	 * @url craig.is/killing/mice
+	 */
+	(function(window, document, undefined) {
+	
+	    /**
+	     * mapping of special keycodes to their corresponding keys
+	     *
+	     * everything in this dictionary cannot use keypress events
+	     * so it has to be here to map to the correct keycodes for
+	     * keyup/keydown events
+	     *
+	     * @type {Object}
+	     */
+	    var _MAP = {
+	        8: 'backspace',
+	        9: 'tab',
+	        13: 'enter',
+	        16: 'shift',
+	        17: 'ctrl',
+	        18: 'alt',
+	        20: 'capslock',
+	        27: 'esc',
+	        32: 'space',
+	        33: 'pageup',
+	        34: 'pagedown',
+	        35: 'end',
+	        36: 'home',
+	        37: 'left',
+	        38: 'up',
+	        39: 'right',
+	        40: 'down',
+	        45: 'ins',
+	        46: 'del',
+	        91: 'meta',
+	        93: 'meta',
+	        224: 'meta'
+	    };
+	
+	    /**
+	     * mapping for special characters so they can support
+	     *
+	     * this dictionary is only used incase you want to bind a
+	     * keyup or keydown event to one of these keys
+	     *
+	     * @type {Object}
+	     */
+	    var _KEYCODE_MAP = {
+	        106: '*',
+	        107: '+',
+	        109: '-',
+	        110: '.',
+	        111 : '/',
+	        186: ';',
+	        187: '=',
+	        188: ',',
+	        189: '-',
+	        190: '.',
+	        191: '/',
+	        192: '`',
+	        219: '[',
+	        220: '\\',
+	        221: ']',
+	        222: '\''
+	    };
+	
+	    /**
+	     * this is a mapping of keys that require shift on a US keypad
+	     * back to the non shift equivelents
+	     *
+	     * this is so you can use keyup events with these keys
+	     *
+	     * note that this will only work reliably on US keyboards
+	     *
+	     * @type {Object}
+	     */
+	    var _SHIFT_MAP = {
+	        '~': '`',
+	        '!': '1',
+	        '@': '2',
+	        '#': '3',
+	        '$': '4',
+	        '%': '5',
+	        '^': '6',
+	        '&': '7',
+	        '*': '8',
+	        '(': '9',
+	        ')': '0',
+	        '_': '-',
+	        '+': '=',
+	        ':': ';',
+	        '\"': '\'',
+	        '<': ',',
+	        '>': '.',
+	        '?': '/',
+	        '|': '\\'
+	    };
+	
+	    /**
+	     * this is a list of special strings you can use to map
+	     * to modifier keys when you specify your keyboard shortcuts
+	     *
+	     * @type {Object}
+	     */
+	    var _SPECIAL_ALIASES = {
+	        'option': 'alt',
+	        'command': 'meta',
+	        'return': 'enter',
+	        'escape': 'esc',
+	        'plus': '+',
+	        'mod': /Mac|iPod|iPhone|iPad/.test(navigator.platform) ? 'meta' : 'ctrl'
+	    };
+	
+	    /**
+	     * variable to store the flipped version of _MAP from above
+	     * needed to check if we should use keypress or not when no action
+	     * is specified
+	     *
+	     * @type {Object|undefined}
+	     */
+	    var _REVERSE_MAP;
+	
+	    /**
+	     * loop through the f keys, f1 to f19 and add them to the map
+	     * programatically
+	     */
+	    for (var i = 1; i < 20; ++i) {
+	        _MAP[111 + i] = 'f' + i;
+	    }
+	
+	    /**
+	     * loop through to map numbers on the numeric keypad
+	     */
+	    for (i = 0; i <= 9; ++i) {
+	        _MAP[i + 96] = i;
+	    }
+	
+	    /**
+	     * cross browser add event method
+	     *
+	     * @param {Element|HTMLDocument} object
+	     * @param {string} type
+	     * @param {Function} callback
+	     * @returns void
+	     */
+	    function _addEvent(object, type, callback) {
+	        if (object.addEventListener) {
+	            object.addEventListener(type, callback, false);
+	            return;
+	        }
+	
+	        object.attachEvent('on' + type, callback);
+	    }
+	
+	    /**
+	     * takes the event and returns the key character
+	     *
+	     * @param {Event} e
+	     * @return {string}
+	     */
+	    function _characterFromEvent(e) {
+	
+	        // for keypress events we should return the character as is
+	        if (e.type == 'keypress') {
+	            var character = String.fromCharCode(e.which);
+	
+	            // if the shift key is not pressed then it is safe to assume
+	            // that we want the character to be lowercase.  this means if
+	            // you accidentally have caps lock on then your key bindings
+	            // will continue to work
+	            //
+	            // the only side effect that might not be desired is if you
+	            // bind something like 'A' cause you want to trigger an
+	            // event when capital A is pressed caps lock will no longer
+	            // trigger the event.  shift+a will though.
+	            if (!e.shiftKey) {
+	                character = character.toLowerCase();
+	            }
+	
+	            return character;
+	        }
+	
+	        // for non keypress events the special maps are needed
+	        if (_MAP[e.which]) {
+	            return _MAP[e.which];
+	        }
+	
+	        if (_KEYCODE_MAP[e.which]) {
+	            return _KEYCODE_MAP[e.which];
+	        }
+	
+	        // if it is not in the special map
+	
+	        // with keydown and keyup events the character seems to always
+	        // come in as an uppercase character whether you are pressing shift
+	        // or not.  we should make sure it is always lowercase for comparisons
+	        return String.fromCharCode(e.which).toLowerCase();
+	    }
+	
+	    /**
+	     * checks if two arrays are equal
+	     *
+	     * @param {Array} modifiers1
+	     * @param {Array} modifiers2
+	     * @returns {boolean}
+	     */
+	    function _modifiersMatch(modifiers1, modifiers2) {
+	        return modifiers1.sort().join(',') === modifiers2.sort().join(',');
+	    }
+	
+	    /**
+	     * takes a key event and figures out what the modifiers are
+	     *
+	     * @param {Event} e
+	     * @returns {Array}
+	     */
+	    function _eventModifiers(e) {
+	        var modifiers = [];
+	
+	        if (e.shiftKey) {
+	            modifiers.push('shift');
+	        }
+	
+	        if (e.altKey) {
+	            modifiers.push('alt');
+	        }
+	
+	        if (e.ctrlKey) {
+	            modifiers.push('ctrl');
+	        }
+	
+	        if (e.metaKey) {
+	            modifiers.push('meta');
+	        }
+	
+	        return modifiers;
+	    }
+	
+	    /**
+	     * prevents default for this event
+	     *
+	     * @param {Event} e
+	     * @returns void
+	     */
+	    function _preventDefault(e) {
+	        if (e.preventDefault) {
+	            e.preventDefault();
+	            return;
+	        }
+	
+	        e.returnValue = false;
+	    }
+	
+	    /**
+	     * stops propogation for this event
+	     *
+	     * @param {Event} e
+	     * @returns void
+	     */
+	    function _stopPropagation(e) {
+	        if (e.stopPropagation) {
+	            e.stopPropagation();
+	            return;
+	        }
+	
+	        e.cancelBubble = true;
+	    }
+	
+	    /**
+	     * determines if the keycode specified is a modifier key or not
+	     *
+	     * @param {string} key
+	     * @returns {boolean}
+	     */
+	    function _isModifier(key) {
+	        return key == 'shift' || key == 'ctrl' || key == 'alt' || key == 'meta';
+	    }
+	
+	    /**
+	     * reverses the map lookup so that we can look for specific keys
+	     * to see what can and can't use keypress
+	     *
+	     * @return {Object}
+	     */
+	    function _getReverseMap() {
+	        if (!_REVERSE_MAP) {
+	            _REVERSE_MAP = {};
+	            for (var key in _MAP) {
+	
+	                // pull out the numeric keypad from here cause keypress should
+	                // be able to detect the keys from the character
+	                if (key > 95 && key < 112) {
+	                    continue;
+	                }
+	
+	                if (_MAP.hasOwnProperty(key)) {
+	                    _REVERSE_MAP[_MAP[key]] = key;
+	                }
+	            }
+	        }
+	        return _REVERSE_MAP;
+	    }
+	
+	    /**
+	     * picks the best action based on the key combination
+	     *
+	     * @param {string} key - character for key
+	     * @param {Array} modifiers
+	     * @param {string=} action passed in
+	     */
+	    function _pickBestAction(key, modifiers, action) {
+	
+	        // if no action was picked in we should try to pick the one
+	        // that we think would work best for this key
+	        if (!action) {
+	            action = _getReverseMap()[key] ? 'keydown' : 'keypress';
+	        }
+	
+	        // modifier keys don't work as expected with keypress,
+	        // switch to keydown
+	        if (action == 'keypress' && modifiers.length) {
+	            action = 'keydown';
+	        }
+	
+	        return action;
+	    }
+	
+	    /**
+	     * Converts from a string key combination to an array
+	     *
+	     * @param  {string} combination like "command+shift+l"
+	     * @return {Array}
+	     */
+	    function _keysFromString(combination) {
+	        if (combination === '+') {
+	            return ['+'];
+	        }
+	
+	        combination = combination.replace(/\+{2}/g, '+plus');
+	        return combination.split('+');
+	    }
+	
+	    /**
+	     * Gets info for a specific key combination
+	     *
+	     * @param  {string} combination key combination ("command+s" or "a" or "*")
+	     * @param  {string=} action
+	     * @returns {Object}
+	     */
+	    function _getKeyInfo(combination, action) {
+	        var keys;
+	        var key;
+	        var i;
+	        var modifiers = [];
+	
+	        // take the keys from this pattern and figure out what the actual
+	        // pattern is all about
+	        keys = _keysFromString(combination);
+	
+	        for (i = 0; i < keys.length; ++i) {
+	            key = keys[i];
+	
+	            // normalize key names
+	            if (_SPECIAL_ALIASES[key]) {
+	                key = _SPECIAL_ALIASES[key];
+	            }
+	
+	            // if this is not a keypress event then we should
+	            // be smart about using shift keys
+	            // this will only work for US keyboards however
+	            if (action && action != 'keypress' && _SHIFT_MAP[key]) {
+	                key = _SHIFT_MAP[key];
+	                modifiers.push('shift');
+	            }
+	
+	            // if this key is a modifier then add it to the list of modifiers
+	            if (_isModifier(key)) {
+	                modifiers.push(key);
+	            }
+	        }
+	
+	        // depending on what the key combination is
+	        // we will try to pick the best event for it
+	        action = _pickBestAction(key, modifiers, action);
+	
+	        return {
+	            key: key,
+	            modifiers: modifiers,
+	            action: action
+	        };
+	    }
+	
+	    function _belongsTo(element, ancestor) {
+	        if (element === document) {
+	            return false;
+	        }
+	
+	        if (element === ancestor) {
+	            return true;
+	        }
+	
+	        return _belongsTo(element.parentNode, ancestor);
+	    }
+	
+	    function Mousetrap(targetElement) {
+	        var self = this;
+	
+	        targetElement = targetElement || document;
+	
+	        if (!(self instanceof Mousetrap)) {
+	            return new Mousetrap(targetElement);
+	        }
+	
+	        /**
+	         * element to attach key events to
+	         *
+	         * @type {Element}
+	         */
+	        self.target = targetElement;
+	
+	        /**
+	         * a list of all the callbacks setup via Mousetrap.bind()
+	         *
+	         * @type {Object}
+	         */
+	        self._callbacks = {};
+	
+	        /**
+	         * direct map of string combinations to callbacks used for trigger()
+	         *
+	         * @type {Object}
+	         */
+	        self._directMap = {};
+	
+	        /**
+	         * keeps track of what level each sequence is at since multiple
+	         * sequences can start out with the same sequence
+	         *
+	         * @type {Object}
+	         */
+	        var _sequenceLevels = {};
+	
+	        /**
+	         * variable to store the setTimeout call
+	         *
+	         * @type {null|number}
+	         */
+	        var _resetTimer;
+	
+	        /**
+	         * temporary state where we will ignore the next keyup
+	         *
+	         * @type {boolean|string}
+	         */
+	        var _ignoreNextKeyup = false;
+	
+	        /**
+	         * temporary state where we will ignore the next keypress
+	         *
+	         * @type {boolean}
+	         */
+	        var _ignoreNextKeypress = false;
+	
+	        /**
+	         * are we currently inside of a sequence?
+	         * type of action ("keyup" or "keydown" or "keypress") or false
+	         *
+	         * @type {boolean|string}
+	         */
+	        var _nextExpectedAction = false;
+	
+	        /**
+	         * resets all sequence counters except for the ones passed in
+	         *
+	         * @param {Object} doNotReset
+	         * @returns void
+	         */
+	        function _resetSequences(doNotReset) {
+	            doNotReset = doNotReset || {};
+	
+	            var activeSequences = false,
+	                key;
+	
+	            for (key in _sequenceLevels) {
+	                if (doNotReset[key]) {
+	                    activeSequences = true;
+	                    continue;
+	                }
+	                _sequenceLevels[key] = 0;
+	            }
+	
+	            if (!activeSequences) {
+	                _nextExpectedAction = false;
+	            }
+	        }
+	
+	        /**
+	         * finds all callbacks that match based on the keycode, modifiers,
+	         * and action
+	         *
+	         * @param {string} character
+	         * @param {Array} modifiers
+	         * @param {Event|Object} e
+	         * @param {string=} sequenceName - name of the sequence we are looking for
+	         * @param {string=} combination
+	         * @param {number=} level
+	         * @returns {Array}
+	         */
+	        function _getMatches(character, modifiers, e, sequenceName, combination, level) {
+	            var i;
+	            var callback;
+	            var matches = [];
+	            var action = e.type;
+	
+	            // if there are no events related to this keycode
+	            if (!self._callbacks[character]) {
+	                return [];
+	            }
+	
+	            // if a modifier key is coming up on its own we should allow it
+	            if (action == 'keyup' && _isModifier(character)) {
+	                modifiers = [character];
+	            }
+	
+	            // loop through all callbacks for the key that was pressed
+	            // and see if any of them match
+	            for (i = 0; i < self._callbacks[character].length; ++i) {
+	                callback = self._callbacks[character][i];
+	
+	                // if a sequence name is not specified, but this is a sequence at
+	                // the wrong level then move onto the next match
+	                if (!sequenceName && callback.seq && _sequenceLevels[callback.seq] != callback.level) {
+	                    continue;
+	                }
+	
+	                // if the action we are looking for doesn't match the action we got
+	                // then we should keep going
+	                if (action != callback.action) {
+	                    continue;
+	                }
+	
+	                // if this is a keypress event and the meta key and control key
+	                // are not pressed that means that we need to only look at the
+	                // character, otherwise check the modifiers as well
+	                //
+	                // chrome will not fire a keypress if meta or control is down
+	                // safari will fire a keypress if meta or meta+shift is down
+	                // firefox will fire a keypress if meta or control is down
+	                if ((action == 'keypress' && !e.metaKey && !e.ctrlKey) || _modifiersMatch(modifiers, callback.modifiers)) {
+	
+	                    // when you bind a combination or sequence a second time it
+	                    // should overwrite the first one.  if a sequenceName or
+	                    // combination is specified in this call it does just that
+	                    //
+	                    // @todo make deleting its own method?
+	                    var deleteCombo = !sequenceName && callback.combo == combination;
+	                    var deleteSequence = sequenceName && callback.seq == sequenceName && callback.level == level;
+	                    if (deleteCombo || deleteSequence) {
+	                        self._callbacks[character].splice(i, 1);
+	                    }
+	
+	                    matches.push(callback);
+	                }
+	            }
+	
+	            return matches;
+	        }
+	
+	        /**
+	         * actually calls the callback function
+	         *
+	         * if your callback function returns false this will use the jquery
+	         * convention - prevent default and stop propogation on the event
+	         *
+	         * @param {Function} callback
+	         * @param {Event} e
+	         * @returns void
+	         */
+	        function _fireCallback(callback, e, combo, sequence) {
+	
+	            // if this event should not happen stop here
+	            if (self.stopCallback(e, e.target || e.srcElement, combo, sequence)) {
+	                return;
+	            }
+	
+	            if (callback(e, combo) === false) {
+	                _preventDefault(e);
+	                _stopPropagation(e);
+	            }
+	        }
+	
+	        /**
+	         * handles a character key event
+	         *
+	         * @param {string} character
+	         * @param {Array} modifiers
+	         * @param {Event} e
+	         * @returns void
+	         */
+	        self._handleKey = function(character, modifiers, e) {
+	            var callbacks = _getMatches(character, modifiers, e);
+	            var i;
+	            var doNotReset = {};
+	            var maxLevel = 0;
+	            var processedSequenceCallback = false;
+	
+	            // Calculate the maxLevel for sequences so we can only execute the longest callback sequence
+	            for (i = 0; i < callbacks.length; ++i) {
+	                if (callbacks[i].seq) {
+	                    maxLevel = Math.max(maxLevel, callbacks[i].level);
+	                }
+	            }
+	
+	            // loop through matching callbacks for this key event
+	            for (i = 0; i < callbacks.length; ++i) {
+	
+	                // fire for all sequence callbacks
+	                // this is because if for example you have multiple sequences
+	                // bound such as "g i" and "g t" they both need to fire the
+	                // callback for matching g cause otherwise you can only ever
+	                // match the first one
+	                if (callbacks[i].seq) {
+	
+	                    // only fire callbacks for the maxLevel to prevent
+	                    // subsequences from also firing
+	                    //
+	                    // for example 'a option b' should not cause 'option b' to fire
+	                    // even though 'option b' is part of the other sequence
+	                    //
+	                    // any sequences that do not match here will be discarded
+	                    // below by the _resetSequences call
+	                    if (callbacks[i].level != maxLevel) {
+	                        continue;
+	                    }
+	
+	                    processedSequenceCallback = true;
+	
+	                    // keep a list of which sequences were matches for later
+	                    doNotReset[callbacks[i].seq] = 1;
+	                    _fireCallback(callbacks[i].callback, e, callbacks[i].combo, callbacks[i].seq);
+	                    continue;
+	                }
+	
+	                // if there were no sequence matches but we are still here
+	                // that means this is a regular match so we should fire that
+	                if (!processedSequenceCallback) {
+	                    _fireCallback(callbacks[i].callback, e, callbacks[i].combo);
+	                }
+	            }
+	
+	            // if the key you pressed matches the type of sequence without
+	            // being a modifier (ie "keyup" or "keypress") then we should
+	            // reset all sequences that were not matched by this event
+	            //
+	            // this is so, for example, if you have the sequence "h a t" and you
+	            // type "h e a r t" it does not match.  in this case the "e" will
+	            // cause the sequence to reset
+	            //
+	            // modifier keys are ignored because you can have a sequence
+	            // that contains modifiers such as "enter ctrl+space" and in most
+	            // cases the modifier key will be pressed before the next key
+	            //
+	            // also if you have a sequence such as "ctrl+b a" then pressing the
+	            // "b" key will trigger a "keypress" and a "keydown"
+	            //
+	            // the "keydown" is expected when there is a modifier, but the
+	            // "keypress" ends up matching the _nextExpectedAction since it occurs
+	            // after and that causes the sequence to reset
+	            //
+	            // we ignore keypresses in a sequence that directly follow a keydown
+	            // for the same character
+	            var ignoreThisKeypress = e.type == 'keypress' && _ignoreNextKeypress;
+	            if (e.type == _nextExpectedAction && !_isModifier(character) && !ignoreThisKeypress) {
+	                _resetSequences(doNotReset);
+	            }
+	
+	            _ignoreNextKeypress = processedSequenceCallback && e.type == 'keydown';
+	        };
+	
+	        /**
+	         * handles a keydown event
+	         *
+	         * @param {Event} e
+	         * @returns void
+	         */
+	        function _handleKeyEvent(e) {
+	
+	            // normalize e.which for key events
+	            // @see http://stackoverflow.com/questions/4285627/javascript-keycode-vs-charcode-utter-confusion
+	            if (typeof e.which !== 'number') {
+	                e.which = e.keyCode;
+	            }
+	
+	            var character = _characterFromEvent(e);
+	
+	            // no character found then stop
+	            if (!character) {
+	                return;
+	            }
+	
+	            // need to use === for the character check because the character can be 0
+	            if (e.type == 'keyup' && _ignoreNextKeyup === character) {
+	                _ignoreNextKeyup = false;
+	                return;
+	            }
+	
+	            self.handleKey(character, _eventModifiers(e), e);
+	        }
+	
+	        /**
+	         * called to set a 1 second timeout on the specified sequence
+	         *
+	         * this is so after each key press in the sequence you have 1 second
+	         * to press the next key before you have to start over
+	         *
+	         * @returns void
+	         */
+	        function _resetSequenceTimer() {
+	            clearTimeout(_resetTimer);
+	            _resetTimer = setTimeout(_resetSequences, 1000);
+	        }
+	
+	        /**
+	         * binds a key sequence to an event
+	         *
+	         * @param {string} combo - combo specified in bind call
+	         * @param {Array} keys
+	         * @param {Function} callback
+	         * @param {string=} action
+	         * @returns void
+	         */
+	        function _bindSequence(combo, keys, callback, action) {
+	
+	            // start off by adding a sequence level record for this combination
+	            // and setting the level to 0
+	            _sequenceLevels[combo] = 0;
+	
+	            /**
+	             * callback to increase the sequence level for this sequence and reset
+	             * all other sequences that were active
+	             *
+	             * @param {string} nextAction
+	             * @returns {Function}
+	             */
+	            function _increaseSequence(nextAction) {
+	                return function() {
+	                    _nextExpectedAction = nextAction;
+	                    ++_sequenceLevels[combo];
+	                    _resetSequenceTimer();
+	                };
+	            }
+	
+	            /**
+	             * wraps the specified callback inside of another function in order
+	             * to reset all sequence counters as soon as this sequence is done
+	             *
+	             * @param {Event} e
+	             * @returns void
+	             */
+	            function _callbackAndReset(e) {
+	                _fireCallback(callback, e, combo);
+	
+	                // we should ignore the next key up if the action is key down
+	                // or keypress.  this is so if you finish a sequence and
+	                // release the key the final key will not trigger a keyup
+	                if (action !== 'keyup') {
+	                    _ignoreNextKeyup = _characterFromEvent(e);
+	                }
+	
+	                // weird race condition if a sequence ends with the key
+	                // another sequence begins with
+	                setTimeout(_resetSequences, 10);
+	            }
+	
+	            // loop through keys one at a time and bind the appropriate callback
+	            // function.  for any key leading up to the final one it should
+	            // increase the sequence. after the final, it should reset all sequences
+	            //
+	            // if an action is specified in the original bind call then that will
+	            // be used throughout.  otherwise we will pass the action that the
+	            // next key in the sequence should match.  this allows a sequence
+	            // to mix and match keypress and keydown events depending on which
+	            // ones are better suited to the key provided
+	            for (var i = 0; i < keys.length; ++i) {
+	                var isFinal = i + 1 === keys.length;
+	                var wrappedCallback = isFinal ? _callbackAndReset : _increaseSequence(action || _getKeyInfo(keys[i + 1]).action);
+	                _bindSingle(keys[i], wrappedCallback, action, combo, i);
+	            }
+	        }
+	
+	        /**
+	         * binds a single keyboard combination
+	         *
+	         * @param {string} combination
+	         * @param {Function} callback
+	         * @param {string=} action
+	         * @param {string=} sequenceName - name of sequence if part of sequence
+	         * @param {number=} level - what part of the sequence the command is
+	         * @returns void
+	         */
+	        function _bindSingle(combination, callback, action, sequenceName, level) {
+	
+	            // store a direct mapped reference for use with Mousetrap.trigger
+	            self._directMap[combination + ':' + action] = callback;
+	
+	            // make sure multiple spaces in a row become a single space
+	            combination = combination.replace(/\s+/g, ' ');
+	
+	            var sequence = combination.split(' ');
+	            var info;
+	
+	            // if this pattern is a sequence of keys then run through this method
+	            // to reprocess each pattern one key at a time
+	            if (sequence.length > 1) {
+	                _bindSequence(combination, sequence, callback, action);
+	                return;
+	            }
+	
+	            info = _getKeyInfo(combination, action);
+	
+	            // make sure to initialize array if this is the first time
+	            // a callback is added for this key
+	            self._callbacks[info.key] = self._callbacks[info.key] || [];
+	
+	            // remove an existing match if there is one
+	            _getMatches(info.key, info.modifiers, {type: info.action}, sequenceName, combination, level);
+	
+	            // add this call back to the array
+	            // if it is a sequence put it at the beginning
+	            // if not put it at the end
+	            //
+	            // this is important because the way these are processed expects
+	            // the sequence ones to come first
+	            self._callbacks[info.key][sequenceName ? 'unshift' : 'push']({
+	                callback: callback,
+	                modifiers: info.modifiers,
+	                action: info.action,
+	                seq: sequenceName,
+	                level: level,
+	                combo: combination
+	            });
+	        }
+	
+	        /**
+	         * binds multiple combinations to the same callback
+	         *
+	         * @param {Array} combinations
+	         * @param {Function} callback
+	         * @param {string|undefined} action
+	         * @returns void
+	         */
+	        self._bindMultiple = function(combinations, callback, action) {
+	            for (var i = 0; i < combinations.length; ++i) {
+	                _bindSingle(combinations[i], callback, action);
+	            }
+	        };
+	
+	        // start!
+	        _addEvent(targetElement, 'keypress', _handleKeyEvent);
+	        _addEvent(targetElement, 'keydown', _handleKeyEvent);
+	        _addEvent(targetElement, 'keyup', _handleKeyEvent);
+	    }
+	
+	    /**
+	     * binds an event to mousetrap
+	     *
+	     * can be a single key, a combination of keys separated with +,
+	     * an array of keys, or a sequence of keys separated by spaces
+	     *
+	     * be sure to list the modifier keys first to make sure that the
+	     * correct key ends up getting bound (the last key in the pattern)
+	     *
+	     * @param {string|Array} keys
+	     * @param {Function} callback
+	     * @param {string=} action - 'keypress', 'keydown', or 'keyup'
+	     * @returns void
+	     */
+	    Mousetrap.prototype.bind = function(keys, callback, action) {
+	        var self = this;
+	        keys = keys instanceof Array ? keys : [keys];
+	        self._bindMultiple.call(self, keys, callback, action);
+	        return self;
+	    };
+	
+	    /**
+	     * unbinds an event to mousetrap
+	     *
+	     * the unbinding sets the callback function of the specified key combo
+	     * to an empty function and deletes the corresponding key in the
+	     * _directMap dict.
+	     *
+	     * TODO: actually remove this from the _callbacks dictionary instead
+	     * of binding an empty function
+	     *
+	     * the keycombo+action has to be exactly the same as
+	     * it was defined in the bind method
+	     *
+	     * @param {string|Array} keys
+	     * @param {string} action
+	     * @returns void
+	     */
+	    Mousetrap.prototype.unbind = function(keys, action) {
+	        var self = this;
+	        return self.bind.call(self, keys, function() {}, action);
+	    };
+	
+	    /**
+	     * triggers an event that has already been bound
+	     *
+	     * @param {string} keys
+	     * @param {string=} action
+	     * @returns void
+	     */
+	    Mousetrap.prototype.trigger = function(keys, action) {
+	        var self = this;
+	        if (self._directMap[keys + ':' + action]) {
+	            self._directMap[keys + ':' + action]({}, keys);
+	        }
+	        return self;
+	    };
+	
+	    /**
+	     * resets the library back to its initial state.  this is useful
+	     * if you want to clear out the current keyboard shortcuts and bind
+	     * new ones - for example if you switch to another page
+	     *
+	     * @returns void
+	     */
+	    Mousetrap.prototype.reset = function() {
+	        var self = this;
+	        self._callbacks = {};
+	        self._directMap = {};
+	        return self;
+	    };
+	
+	    /**
+	     * should we stop this event before firing off callbacks
+	     *
+	     * @param {Event} e
+	     * @param {Element} element
+	     * @return {boolean}
+	     */
+	    Mousetrap.prototype.stopCallback = function(e, element) {
+	        var self = this;
+	
+	        // if the element has the class "mousetrap" then no need to stop
+	        if ((' ' + element.className + ' ').indexOf(' mousetrap ') > -1) {
+	            return false;
+	        }
+	
+	        if (_belongsTo(element, self.target)) {
+	            return false;
+	        }
+	
+	        // stop for input, select, and textarea
+	        return element.tagName == 'INPUT' || element.tagName == 'SELECT' || element.tagName == 'TEXTAREA' || element.isContentEditable;
+	    };
+	
+	    /**
+	     * exposes _handleKey publicly so it can be overwritten by extensions
+	     */
+	    Mousetrap.prototype.handleKey = function() {
+	        var self = this;
+	        return self._handleKey.apply(self, arguments);
+	    };
+	
+	    /**
+	     * Init the global mousetrap functions
+	     *
+	     * This method is needed to allow the global mousetrap functions to work
+	     * now that mousetrap is a constructor function.
+	     */
+	    Mousetrap.init = function() {
+	        var documentMousetrap = Mousetrap(document);
+	        for (var method in documentMousetrap) {
+	            if (method.charAt(0) !== '_') {
+	                Mousetrap[method] = (function(method) {
+	                    return function() {
+	                        return documentMousetrap[method].apply(documentMousetrap, arguments);
+	                    };
+	                } (method));
+	            }
+	        }
+	    };
+	
+	    Mousetrap.init();
+	
+	    // expose mousetrap to the global object
+	    window.Mousetrap = Mousetrap;
+	
+	    // expose as a common js module
+	    if (typeof module !== 'undefined' && module.exports) {
+	        module.exports = Mousetrap;
+	    }
+	
+	    // expose mousetrap as an AMD module
+	    if (true) {
+	        !(__WEBPACK_AMD_DEFINE_RESULT__ = function() {
+	            return Mousetrap;
+	        }.call(exports, __webpack_require__, exports, module), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+	    }
+	}) (window, document);
+
+
+/***/ },
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/**
@@ -9093,11 +10153,11 @@
 	})();
 
 /***/ },
-/* 9 */
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var baseValues = __webpack_require__(15),
-	    keys = __webpack_require__(16);
+	var baseValues = __webpack_require__(17),
+	    keys = __webpack_require__(18);
 	
 	/**
 	 * Creates an array of the own enumerable property values of `object`.
@@ -9132,7 +10192,203 @@
 
 
 /***/ },
-/* 10 */
+/* 11 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseAssign = __webpack_require__(15),
+	    createAssigner = __webpack_require__(16);
+	
+	/**
+	 * Assigns own enumerable properties of source object(s) to the destination
+	 * object. Subsequent sources overwrite property assignments of previous sources.
+	 * If `customizer` is provided it is invoked to produce the assigned values.
+	 * The `customizer` is bound to `thisArg` and invoked with five arguments:
+	 * (objectValue, sourceValue, key, object, source).
+	 *
+	 * @static
+	 * @memberOf _
+	 * @alias extend
+	 * @category Object
+	 * @param {Object} object The destination object.
+	 * @param {...Object} [sources] The source objects.
+	 * @param {Function} [customizer] The function to customize assigning values.
+	 * @param {*} [thisArg] The `this` binding of `customizer`.
+	 * @returns {Object} Returns `object`.
+	 * @example
+	 *
+	 * _.assign({ 'user': 'barney' }, { 'age': 40 }, { 'user': 'fred' });
+	 * // => { 'user': 'fred', 'age': 40 }
+	 *
+	 * // using a customizer callback
+	 * var defaults = _.partialRight(_.assign, function(value, other) {
+	 *   return typeof value == 'undefined' ? other : value;
+	 * });
+	 *
+	 * defaults({ 'user': 'barney' }, { 'age': 36 }, { 'user': 'fred' });
+	 * // => { 'user': 'barney', 'age': 36 }
+	 */
+	var assign = createAssigner(baseAssign);
+	
+	module.exports = assign;
+
+
+/***/ },
+/* 12 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	
+	var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
+	
+	var assign = _interopRequire(__webpack_require__(11));
+	
+	var Entity = _interopRequire(__webpack_require__(5));
+	
+	var Composite = __webpack_require__(9).Composite;
+	
+	var World = {};
+	
+	World.create = function () {
+	  var state = arguments[0] === undefined ? {} : arguments[0];
+	
+	  var world = Entity.create(assign({
+	    label: "TIWorld",
+	    gravity: { x: 0, y: 1 },
+	    bounds: {
+	      min: { x: 0, y: 0 },
+	      max: { x: 800, y: 600 }
+	    }
+	  }, state));
+	
+	  return world;
+	};
+	
+	World.allEntities = function (world) {
+	  return Composite.allComposites(world);
+	};
+	
+	module.exports = World;
+
+/***/ },
+/* 13 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	
+	var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
+	
+	var _Common = __webpack_require__(19);
+	
+	var requestAnimFrame = _Common.requestAnimFrame;
+	var cancelAnimFrame = _Common.cancelAnimFrame;
+	
+	var assign = _interopRequire(__webpack_require__(11));
+	
+	var FPS = 60;
+	var DELTA_SAMPLE_SIZE = FPS;
+	var DELTA = 1000 / FPS;
+	
+	var Runner = {};
+	
+	Runner.create = function (state, tick) {
+	  var preTick = arguments[2] === undefined ? function (runner) {
+	    return runner;
+	  } : arguments[2];
+	  return (function () {
+	    var counterTimestamp = 0;
+	    var frameCounter = 0;
+	    var deltaHistory = [];
+	    var timePrev = undefined;
+	    var timeScalePrev = 1;
+	
+	    var runner = assign({
+	      fps: FPS,
+	      timestamp: 0,
+	      delta: DELTA,
+	      correction: 1,
+	      deltaMin: 1000 / FPS,
+	      deltaMax: 1000 / (FPS * 0.5),
+	      timeScale: 1,
+	      isFixed: false,
+	      frameRequestId: 0,
+	      enabled: true,
+	      frameCount: 0
+	    }, state);
+	
+	    function step(time) {
+	      var delta = undefined;
+	      var correction = 1;
+	
+	      runner.frameRequestId = requestAnimFrame(step);
+	
+	      if (!runner.enabled) {
+	        return;
+	      }
+	
+	      preTick(runner);
+	
+	      if (runner.isFixed) {
+	        // fixed timestep
+	        delta = runner.delta;
+	      } else {
+	        // dynamic timestep based on wall clock between calls
+	        delta = time - timePrev || runner.delta;
+	        timePrev = time;
+	
+	        // optimistically filter delta over a few frames, to improve stability
+	        deltaHistory.push(delta);
+	        deltaHistory = deltaHistory.slice(-DELTA_SAMPLE_SIZE);
+	        delta = Math.min.apply(null, deltaHistory);
+	
+	        // limit delta
+	        delta = delta < runner.deltaMin ? runner.deltaMin : delta;
+	        delta = delta > runner.deltaMax ? runner.deltaMax : delta;
+	
+	        // time correction for delta
+	        correction = delta / runner.delta;
+	
+	        // update engine timing object
+	        runner.delta = delta;
+	      }
+	
+	      // time correction for time scaling
+	      if (timeScalePrev !== 0) {
+	        correction *= runner.timeScale / timeScalePrev;
+	      }
+	
+	      if (runner.timeScale === 0) {
+	        correction = 0;
+	      }
+	
+	      timeScalePrev = runner.timeScale;
+	
+	      // fps counter
+	      frameCounter += 1;
+	      if (time - counterTimestamp >= 1000) {
+	        runner.fps = frameCounter * ((time - counterTimestamp) / 1000);
+	        counterTimestamp = time;
+	        frameCounter = 0;
+	      }
+	
+	      runner.frameCount += 1;
+	
+	      tick(delta, correction, runner);
+	    }
+	
+	    runner.frameRequestId = requestAnimFrame(step);
+	
+	    return runner;
+	  })();
+	};
+	
+	Runner.destroy = function (runner) {
+	  cancelAnimFrame(runner.frameRequestId);
+	};
+	
+	module.exports = Runner;
+
+/***/ },
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -9188,1347 +10444,11 @@
 
 
 /***/ },
-/* 11 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var __WEBPACK_AMD_DEFINE_RESULT__;/*global define:false */
-	/**
-	 * Copyright 2015 Craig Campbell
-	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
-	 *
-	 * Mousetrap is a simple keyboard shortcut library for Javascript with
-	 * no external dependencies
-	 *
-	 * @version 1.5.2
-	 * @url craig.is/killing/mice
-	 */
-	(function(window, document, undefined) {
-	
-	    /**
-	     * mapping of special keycodes to their corresponding keys
-	     *
-	     * everything in this dictionary cannot use keypress events
-	     * so it has to be here to map to the correct keycodes for
-	     * keyup/keydown events
-	     *
-	     * @type {Object}
-	     */
-	    var _MAP = {
-	        8: 'backspace',
-	        9: 'tab',
-	        13: 'enter',
-	        16: 'shift',
-	        17: 'ctrl',
-	        18: 'alt',
-	        20: 'capslock',
-	        27: 'esc',
-	        32: 'space',
-	        33: 'pageup',
-	        34: 'pagedown',
-	        35: 'end',
-	        36: 'home',
-	        37: 'left',
-	        38: 'up',
-	        39: 'right',
-	        40: 'down',
-	        45: 'ins',
-	        46: 'del',
-	        91: 'meta',
-	        93: 'meta',
-	        224: 'meta'
-	    };
-	
-	    /**
-	     * mapping for special characters so they can support
-	     *
-	     * this dictionary is only used incase you want to bind a
-	     * keyup or keydown event to one of these keys
-	     *
-	     * @type {Object}
-	     */
-	    var _KEYCODE_MAP = {
-	        106: '*',
-	        107: '+',
-	        109: '-',
-	        110: '.',
-	        111 : '/',
-	        186: ';',
-	        187: '=',
-	        188: ',',
-	        189: '-',
-	        190: '.',
-	        191: '/',
-	        192: '`',
-	        219: '[',
-	        220: '\\',
-	        221: ']',
-	        222: '\''
-	    };
-	
-	    /**
-	     * this is a mapping of keys that require shift on a US keypad
-	     * back to the non shift equivelents
-	     *
-	     * this is so you can use keyup events with these keys
-	     *
-	     * note that this will only work reliably on US keyboards
-	     *
-	     * @type {Object}
-	     */
-	    var _SHIFT_MAP = {
-	        '~': '`',
-	        '!': '1',
-	        '@': '2',
-	        '#': '3',
-	        '$': '4',
-	        '%': '5',
-	        '^': '6',
-	        '&': '7',
-	        '*': '8',
-	        '(': '9',
-	        ')': '0',
-	        '_': '-',
-	        '+': '=',
-	        ':': ';',
-	        '\"': '\'',
-	        '<': ',',
-	        '>': '.',
-	        '?': '/',
-	        '|': '\\'
-	    };
-	
-	    /**
-	     * this is a list of special strings you can use to map
-	     * to modifier keys when you specify your keyboard shortcuts
-	     *
-	     * @type {Object}
-	     */
-	    var _SPECIAL_ALIASES = {
-	        'option': 'alt',
-	        'command': 'meta',
-	        'return': 'enter',
-	        'escape': 'esc',
-	        'plus': '+',
-	        'mod': /Mac|iPod|iPhone|iPad/.test(navigator.platform) ? 'meta' : 'ctrl'
-	    };
-	
-	    /**
-	     * variable to store the flipped version of _MAP from above
-	     * needed to check if we should use keypress or not when no action
-	     * is specified
-	     *
-	     * @type {Object|undefined}
-	     */
-	    var _REVERSE_MAP;
-	
-	    /**
-	     * loop through the f keys, f1 to f19 and add them to the map
-	     * programatically
-	     */
-	    for (var i = 1; i < 20; ++i) {
-	        _MAP[111 + i] = 'f' + i;
-	    }
-	
-	    /**
-	     * loop through to map numbers on the numeric keypad
-	     */
-	    for (i = 0; i <= 9; ++i) {
-	        _MAP[i + 96] = i;
-	    }
-	
-	    /**
-	     * cross browser add event method
-	     *
-	     * @param {Element|HTMLDocument} object
-	     * @param {string} type
-	     * @param {Function} callback
-	     * @returns void
-	     */
-	    function _addEvent(object, type, callback) {
-	        if (object.addEventListener) {
-	            object.addEventListener(type, callback, false);
-	            return;
-	        }
-	
-	        object.attachEvent('on' + type, callback);
-	    }
-	
-	    /**
-	     * takes the event and returns the key character
-	     *
-	     * @param {Event} e
-	     * @return {string}
-	     */
-	    function _characterFromEvent(e) {
-	
-	        // for keypress events we should return the character as is
-	        if (e.type == 'keypress') {
-	            var character = String.fromCharCode(e.which);
-	
-	            // if the shift key is not pressed then it is safe to assume
-	            // that we want the character to be lowercase.  this means if
-	            // you accidentally have caps lock on then your key bindings
-	            // will continue to work
-	            //
-	            // the only side effect that might not be desired is if you
-	            // bind something like 'A' cause you want to trigger an
-	            // event when capital A is pressed caps lock will no longer
-	            // trigger the event.  shift+a will though.
-	            if (!e.shiftKey) {
-	                character = character.toLowerCase();
-	            }
-	
-	            return character;
-	        }
-	
-	        // for non keypress events the special maps are needed
-	        if (_MAP[e.which]) {
-	            return _MAP[e.which];
-	        }
-	
-	        if (_KEYCODE_MAP[e.which]) {
-	            return _KEYCODE_MAP[e.which];
-	        }
-	
-	        // if it is not in the special map
-	
-	        // with keydown and keyup events the character seems to always
-	        // come in as an uppercase character whether you are pressing shift
-	        // or not.  we should make sure it is always lowercase for comparisons
-	        return String.fromCharCode(e.which).toLowerCase();
-	    }
-	
-	    /**
-	     * checks if two arrays are equal
-	     *
-	     * @param {Array} modifiers1
-	     * @param {Array} modifiers2
-	     * @returns {boolean}
-	     */
-	    function _modifiersMatch(modifiers1, modifiers2) {
-	        return modifiers1.sort().join(',') === modifiers2.sort().join(',');
-	    }
-	
-	    /**
-	     * takes a key event and figures out what the modifiers are
-	     *
-	     * @param {Event} e
-	     * @returns {Array}
-	     */
-	    function _eventModifiers(e) {
-	        var modifiers = [];
-	
-	        if (e.shiftKey) {
-	            modifiers.push('shift');
-	        }
-	
-	        if (e.altKey) {
-	            modifiers.push('alt');
-	        }
-	
-	        if (e.ctrlKey) {
-	            modifiers.push('ctrl');
-	        }
-	
-	        if (e.metaKey) {
-	            modifiers.push('meta');
-	        }
-	
-	        return modifiers;
-	    }
-	
-	    /**
-	     * prevents default for this event
-	     *
-	     * @param {Event} e
-	     * @returns void
-	     */
-	    function _preventDefault(e) {
-	        if (e.preventDefault) {
-	            e.preventDefault();
-	            return;
-	        }
-	
-	        e.returnValue = false;
-	    }
-	
-	    /**
-	     * stops propogation for this event
-	     *
-	     * @param {Event} e
-	     * @returns void
-	     */
-	    function _stopPropagation(e) {
-	        if (e.stopPropagation) {
-	            e.stopPropagation();
-	            return;
-	        }
-	
-	        e.cancelBubble = true;
-	    }
-	
-	    /**
-	     * determines if the keycode specified is a modifier key or not
-	     *
-	     * @param {string} key
-	     * @returns {boolean}
-	     */
-	    function _isModifier(key) {
-	        return key == 'shift' || key == 'ctrl' || key == 'alt' || key == 'meta';
-	    }
-	
-	    /**
-	     * reverses the map lookup so that we can look for specific keys
-	     * to see what can and can't use keypress
-	     *
-	     * @return {Object}
-	     */
-	    function _getReverseMap() {
-	        if (!_REVERSE_MAP) {
-	            _REVERSE_MAP = {};
-	            for (var key in _MAP) {
-	
-	                // pull out the numeric keypad from here cause keypress should
-	                // be able to detect the keys from the character
-	                if (key > 95 && key < 112) {
-	                    continue;
-	                }
-	
-	                if (_MAP.hasOwnProperty(key)) {
-	                    _REVERSE_MAP[_MAP[key]] = key;
-	                }
-	            }
-	        }
-	        return _REVERSE_MAP;
-	    }
-	
-	    /**
-	     * picks the best action based on the key combination
-	     *
-	     * @param {string} key - character for key
-	     * @param {Array} modifiers
-	     * @param {string=} action passed in
-	     */
-	    function _pickBestAction(key, modifiers, action) {
-	
-	        // if no action was picked in we should try to pick the one
-	        // that we think would work best for this key
-	        if (!action) {
-	            action = _getReverseMap()[key] ? 'keydown' : 'keypress';
-	        }
-	
-	        // modifier keys don't work as expected with keypress,
-	        // switch to keydown
-	        if (action == 'keypress' && modifiers.length) {
-	            action = 'keydown';
-	        }
-	
-	        return action;
-	    }
-	
-	    /**
-	     * Converts from a string key combination to an array
-	     *
-	     * @param  {string} combination like "command+shift+l"
-	     * @return {Array}
-	     */
-	    function _keysFromString(combination) {
-	        if (combination === '+') {
-	            return ['+'];
-	        }
-	
-	        combination = combination.replace(/\+{2}/g, '+plus');
-	        return combination.split('+');
-	    }
-	
-	    /**
-	     * Gets info for a specific key combination
-	     *
-	     * @param  {string} combination key combination ("command+s" or "a" or "*")
-	     * @param  {string=} action
-	     * @returns {Object}
-	     */
-	    function _getKeyInfo(combination, action) {
-	        var keys;
-	        var key;
-	        var i;
-	        var modifiers = [];
-	
-	        // take the keys from this pattern and figure out what the actual
-	        // pattern is all about
-	        keys = _keysFromString(combination);
-	
-	        for (i = 0; i < keys.length; ++i) {
-	            key = keys[i];
-	
-	            // normalize key names
-	            if (_SPECIAL_ALIASES[key]) {
-	                key = _SPECIAL_ALIASES[key];
-	            }
-	
-	            // if this is not a keypress event then we should
-	            // be smart about using shift keys
-	            // this will only work for US keyboards however
-	            if (action && action != 'keypress' && _SHIFT_MAP[key]) {
-	                key = _SHIFT_MAP[key];
-	                modifiers.push('shift');
-	            }
-	
-	            // if this key is a modifier then add it to the list of modifiers
-	            if (_isModifier(key)) {
-	                modifiers.push(key);
-	            }
-	        }
-	
-	        // depending on what the key combination is
-	        // we will try to pick the best event for it
-	        action = _pickBestAction(key, modifiers, action);
-	
-	        return {
-	            key: key,
-	            modifiers: modifiers,
-	            action: action
-	        };
-	    }
-	
-	    function _belongsTo(element, ancestor) {
-	        if (element === document) {
-	            return false;
-	        }
-	
-	        if (element === ancestor) {
-	            return true;
-	        }
-	
-	        return _belongsTo(element.parentNode, ancestor);
-	    }
-	
-	    function Mousetrap(targetElement) {
-	        var self = this;
-	
-	        targetElement = targetElement || document;
-	
-	        if (!(self instanceof Mousetrap)) {
-	            return new Mousetrap(targetElement);
-	        }
-	
-	        /**
-	         * element to attach key events to
-	         *
-	         * @type {Element}
-	         */
-	        self.target = targetElement;
-	
-	        /**
-	         * a list of all the callbacks setup via Mousetrap.bind()
-	         *
-	         * @type {Object}
-	         */
-	        self._callbacks = {};
-	
-	        /**
-	         * direct map of string combinations to callbacks used for trigger()
-	         *
-	         * @type {Object}
-	         */
-	        self._directMap = {};
-	
-	        /**
-	         * keeps track of what level each sequence is at since multiple
-	         * sequences can start out with the same sequence
-	         *
-	         * @type {Object}
-	         */
-	        var _sequenceLevels = {};
-	
-	        /**
-	         * variable to store the setTimeout call
-	         *
-	         * @type {null|number}
-	         */
-	        var _resetTimer;
-	
-	        /**
-	         * temporary state where we will ignore the next keyup
-	         *
-	         * @type {boolean|string}
-	         */
-	        var _ignoreNextKeyup = false;
-	
-	        /**
-	         * temporary state where we will ignore the next keypress
-	         *
-	         * @type {boolean}
-	         */
-	        var _ignoreNextKeypress = false;
-	
-	        /**
-	         * are we currently inside of a sequence?
-	         * type of action ("keyup" or "keydown" or "keypress") or false
-	         *
-	         * @type {boolean|string}
-	         */
-	        var _nextExpectedAction = false;
-	
-	        /**
-	         * resets all sequence counters except for the ones passed in
-	         *
-	         * @param {Object} doNotReset
-	         * @returns void
-	         */
-	        function _resetSequences(doNotReset) {
-	            doNotReset = doNotReset || {};
-	
-	            var activeSequences = false,
-	                key;
-	
-	            for (key in _sequenceLevels) {
-	                if (doNotReset[key]) {
-	                    activeSequences = true;
-	                    continue;
-	                }
-	                _sequenceLevels[key] = 0;
-	            }
-	
-	            if (!activeSequences) {
-	                _nextExpectedAction = false;
-	            }
-	        }
-	
-	        /**
-	         * finds all callbacks that match based on the keycode, modifiers,
-	         * and action
-	         *
-	         * @param {string} character
-	         * @param {Array} modifiers
-	         * @param {Event|Object} e
-	         * @param {string=} sequenceName - name of the sequence we are looking for
-	         * @param {string=} combination
-	         * @param {number=} level
-	         * @returns {Array}
-	         */
-	        function _getMatches(character, modifiers, e, sequenceName, combination, level) {
-	            var i;
-	            var callback;
-	            var matches = [];
-	            var action = e.type;
-	
-	            // if there are no events related to this keycode
-	            if (!self._callbacks[character]) {
-	                return [];
-	            }
-	
-	            // if a modifier key is coming up on its own we should allow it
-	            if (action == 'keyup' && _isModifier(character)) {
-	                modifiers = [character];
-	            }
-	
-	            // loop through all callbacks for the key that was pressed
-	            // and see if any of them match
-	            for (i = 0; i < self._callbacks[character].length; ++i) {
-	                callback = self._callbacks[character][i];
-	
-	                // if a sequence name is not specified, but this is a sequence at
-	                // the wrong level then move onto the next match
-	                if (!sequenceName && callback.seq && _sequenceLevels[callback.seq] != callback.level) {
-	                    continue;
-	                }
-	
-	                // if the action we are looking for doesn't match the action we got
-	                // then we should keep going
-	                if (action != callback.action) {
-	                    continue;
-	                }
-	
-	                // if this is a keypress event and the meta key and control key
-	                // are not pressed that means that we need to only look at the
-	                // character, otherwise check the modifiers as well
-	                //
-	                // chrome will not fire a keypress if meta or control is down
-	                // safari will fire a keypress if meta or meta+shift is down
-	                // firefox will fire a keypress if meta or control is down
-	                if ((action == 'keypress' && !e.metaKey && !e.ctrlKey) || _modifiersMatch(modifiers, callback.modifiers)) {
-	
-	                    // when you bind a combination or sequence a second time it
-	                    // should overwrite the first one.  if a sequenceName or
-	                    // combination is specified in this call it does just that
-	                    //
-	                    // @todo make deleting its own method?
-	                    var deleteCombo = !sequenceName && callback.combo == combination;
-	                    var deleteSequence = sequenceName && callback.seq == sequenceName && callback.level == level;
-	                    if (deleteCombo || deleteSequence) {
-	                        self._callbacks[character].splice(i, 1);
-	                    }
-	
-	                    matches.push(callback);
-	                }
-	            }
-	
-	            return matches;
-	        }
-	
-	        /**
-	         * actually calls the callback function
-	         *
-	         * if your callback function returns false this will use the jquery
-	         * convention - prevent default and stop propogation on the event
-	         *
-	         * @param {Function} callback
-	         * @param {Event} e
-	         * @returns void
-	         */
-	        function _fireCallback(callback, e, combo, sequence) {
-	
-	            // if this event should not happen stop here
-	            if (self.stopCallback(e, e.target || e.srcElement, combo, sequence)) {
-	                return;
-	            }
-	
-	            if (callback(e, combo) === false) {
-	                _preventDefault(e);
-	                _stopPropagation(e);
-	            }
-	        }
-	
-	        /**
-	         * handles a character key event
-	         *
-	         * @param {string} character
-	         * @param {Array} modifiers
-	         * @param {Event} e
-	         * @returns void
-	         */
-	        self._handleKey = function(character, modifiers, e) {
-	            var callbacks = _getMatches(character, modifiers, e);
-	            var i;
-	            var doNotReset = {};
-	            var maxLevel = 0;
-	            var processedSequenceCallback = false;
-	
-	            // Calculate the maxLevel for sequences so we can only execute the longest callback sequence
-	            for (i = 0; i < callbacks.length; ++i) {
-	                if (callbacks[i].seq) {
-	                    maxLevel = Math.max(maxLevel, callbacks[i].level);
-	                }
-	            }
-	
-	            // loop through matching callbacks for this key event
-	            for (i = 0; i < callbacks.length; ++i) {
-	
-	                // fire for all sequence callbacks
-	                // this is because if for example you have multiple sequences
-	                // bound such as "g i" and "g t" they both need to fire the
-	                // callback for matching g cause otherwise you can only ever
-	                // match the first one
-	                if (callbacks[i].seq) {
-	
-	                    // only fire callbacks for the maxLevel to prevent
-	                    // subsequences from also firing
-	                    //
-	                    // for example 'a option b' should not cause 'option b' to fire
-	                    // even though 'option b' is part of the other sequence
-	                    //
-	                    // any sequences that do not match here will be discarded
-	                    // below by the _resetSequences call
-	                    if (callbacks[i].level != maxLevel) {
-	                        continue;
-	                    }
-	
-	                    processedSequenceCallback = true;
-	
-	                    // keep a list of which sequences were matches for later
-	                    doNotReset[callbacks[i].seq] = 1;
-	                    _fireCallback(callbacks[i].callback, e, callbacks[i].combo, callbacks[i].seq);
-	                    continue;
-	                }
-	
-	                // if there were no sequence matches but we are still here
-	                // that means this is a regular match so we should fire that
-	                if (!processedSequenceCallback) {
-	                    _fireCallback(callbacks[i].callback, e, callbacks[i].combo);
-	                }
-	            }
-	
-	            // if the key you pressed matches the type of sequence without
-	            // being a modifier (ie "keyup" or "keypress") then we should
-	            // reset all sequences that were not matched by this event
-	            //
-	            // this is so, for example, if you have the sequence "h a t" and you
-	            // type "h e a r t" it does not match.  in this case the "e" will
-	            // cause the sequence to reset
-	            //
-	            // modifier keys are ignored because you can have a sequence
-	            // that contains modifiers such as "enter ctrl+space" and in most
-	            // cases the modifier key will be pressed before the next key
-	            //
-	            // also if you have a sequence such as "ctrl+b a" then pressing the
-	            // "b" key will trigger a "keypress" and a "keydown"
-	            //
-	            // the "keydown" is expected when there is a modifier, but the
-	            // "keypress" ends up matching the _nextExpectedAction since it occurs
-	            // after and that causes the sequence to reset
-	            //
-	            // we ignore keypresses in a sequence that directly follow a keydown
-	            // for the same character
-	            var ignoreThisKeypress = e.type == 'keypress' && _ignoreNextKeypress;
-	            if (e.type == _nextExpectedAction && !_isModifier(character) && !ignoreThisKeypress) {
-	                _resetSequences(doNotReset);
-	            }
-	
-	            _ignoreNextKeypress = processedSequenceCallback && e.type == 'keydown';
-	        };
-	
-	        /**
-	         * handles a keydown event
-	         *
-	         * @param {Event} e
-	         * @returns void
-	         */
-	        function _handleKeyEvent(e) {
-	
-	            // normalize e.which for key events
-	            // @see http://stackoverflow.com/questions/4285627/javascript-keycode-vs-charcode-utter-confusion
-	            if (typeof e.which !== 'number') {
-	                e.which = e.keyCode;
-	            }
-	
-	            var character = _characterFromEvent(e);
-	
-	            // no character found then stop
-	            if (!character) {
-	                return;
-	            }
-	
-	            // need to use === for the character check because the character can be 0
-	            if (e.type == 'keyup' && _ignoreNextKeyup === character) {
-	                _ignoreNextKeyup = false;
-	                return;
-	            }
-	
-	            self.handleKey(character, _eventModifiers(e), e);
-	        }
-	
-	        /**
-	         * called to set a 1 second timeout on the specified sequence
-	         *
-	         * this is so after each key press in the sequence you have 1 second
-	         * to press the next key before you have to start over
-	         *
-	         * @returns void
-	         */
-	        function _resetSequenceTimer() {
-	            clearTimeout(_resetTimer);
-	            _resetTimer = setTimeout(_resetSequences, 1000);
-	        }
-	
-	        /**
-	         * binds a key sequence to an event
-	         *
-	         * @param {string} combo - combo specified in bind call
-	         * @param {Array} keys
-	         * @param {Function} callback
-	         * @param {string=} action
-	         * @returns void
-	         */
-	        function _bindSequence(combo, keys, callback, action) {
-	
-	            // start off by adding a sequence level record for this combination
-	            // and setting the level to 0
-	            _sequenceLevels[combo] = 0;
-	
-	            /**
-	             * callback to increase the sequence level for this sequence and reset
-	             * all other sequences that were active
-	             *
-	             * @param {string} nextAction
-	             * @returns {Function}
-	             */
-	            function _increaseSequence(nextAction) {
-	                return function() {
-	                    _nextExpectedAction = nextAction;
-	                    ++_sequenceLevels[combo];
-	                    _resetSequenceTimer();
-	                };
-	            }
-	
-	            /**
-	             * wraps the specified callback inside of another function in order
-	             * to reset all sequence counters as soon as this sequence is done
-	             *
-	             * @param {Event} e
-	             * @returns void
-	             */
-	            function _callbackAndReset(e) {
-	                _fireCallback(callback, e, combo);
-	
-	                // we should ignore the next key up if the action is key down
-	                // or keypress.  this is so if you finish a sequence and
-	                // release the key the final key will not trigger a keyup
-	                if (action !== 'keyup') {
-	                    _ignoreNextKeyup = _characterFromEvent(e);
-	                }
-	
-	                // weird race condition if a sequence ends with the key
-	                // another sequence begins with
-	                setTimeout(_resetSequences, 10);
-	            }
-	
-	            // loop through keys one at a time and bind the appropriate callback
-	            // function.  for any key leading up to the final one it should
-	            // increase the sequence. after the final, it should reset all sequences
-	            //
-	            // if an action is specified in the original bind call then that will
-	            // be used throughout.  otherwise we will pass the action that the
-	            // next key in the sequence should match.  this allows a sequence
-	            // to mix and match keypress and keydown events depending on which
-	            // ones are better suited to the key provided
-	            for (var i = 0; i < keys.length; ++i) {
-	                var isFinal = i + 1 === keys.length;
-	                var wrappedCallback = isFinal ? _callbackAndReset : _increaseSequence(action || _getKeyInfo(keys[i + 1]).action);
-	                _bindSingle(keys[i], wrappedCallback, action, combo, i);
-	            }
-	        }
-	
-	        /**
-	         * binds a single keyboard combination
-	         *
-	         * @param {string} combination
-	         * @param {Function} callback
-	         * @param {string=} action
-	         * @param {string=} sequenceName - name of sequence if part of sequence
-	         * @param {number=} level - what part of the sequence the command is
-	         * @returns void
-	         */
-	        function _bindSingle(combination, callback, action, sequenceName, level) {
-	
-	            // store a direct mapped reference for use with Mousetrap.trigger
-	            self._directMap[combination + ':' + action] = callback;
-	
-	            // make sure multiple spaces in a row become a single space
-	            combination = combination.replace(/\s+/g, ' ');
-	
-	            var sequence = combination.split(' ');
-	            var info;
-	
-	            // if this pattern is a sequence of keys then run through this method
-	            // to reprocess each pattern one key at a time
-	            if (sequence.length > 1) {
-	                _bindSequence(combination, sequence, callback, action);
-	                return;
-	            }
-	
-	            info = _getKeyInfo(combination, action);
-	
-	            // make sure to initialize array if this is the first time
-	            // a callback is added for this key
-	            self._callbacks[info.key] = self._callbacks[info.key] || [];
-	
-	            // remove an existing match if there is one
-	            _getMatches(info.key, info.modifiers, {type: info.action}, sequenceName, combination, level);
-	
-	            // add this call back to the array
-	            // if it is a sequence put it at the beginning
-	            // if not put it at the end
-	            //
-	            // this is important because the way these are processed expects
-	            // the sequence ones to come first
-	            self._callbacks[info.key][sequenceName ? 'unshift' : 'push']({
-	                callback: callback,
-	                modifiers: info.modifiers,
-	                action: info.action,
-	                seq: sequenceName,
-	                level: level,
-	                combo: combination
-	            });
-	        }
-	
-	        /**
-	         * binds multiple combinations to the same callback
-	         *
-	         * @param {Array} combinations
-	         * @param {Function} callback
-	         * @param {string|undefined} action
-	         * @returns void
-	         */
-	        self._bindMultiple = function(combinations, callback, action) {
-	            for (var i = 0; i < combinations.length; ++i) {
-	                _bindSingle(combinations[i], callback, action);
-	            }
-	        };
-	
-	        // start!
-	        _addEvent(targetElement, 'keypress', _handleKeyEvent);
-	        _addEvent(targetElement, 'keydown', _handleKeyEvent);
-	        _addEvent(targetElement, 'keyup', _handleKeyEvent);
-	    }
-	
-	    /**
-	     * binds an event to mousetrap
-	     *
-	     * can be a single key, a combination of keys separated with +,
-	     * an array of keys, or a sequence of keys separated by spaces
-	     *
-	     * be sure to list the modifier keys first to make sure that the
-	     * correct key ends up getting bound (the last key in the pattern)
-	     *
-	     * @param {string|Array} keys
-	     * @param {Function} callback
-	     * @param {string=} action - 'keypress', 'keydown', or 'keyup'
-	     * @returns void
-	     */
-	    Mousetrap.prototype.bind = function(keys, callback, action) {
-	        var self = this;
-	        keys = keys instanceof Array ? keys : [keys];
-	        self._bindMultiple.call(self, keys, callback, action);
-	        return self;
-	    };
-	
-	    /**
-	     * unbinds an event to mousetrap
-	     *
-	     * the unbinding sets the callback function of the specified key combo
-	     * to an empty function and deletes the corresponding key in the
-	     * _directMap dict.
-	     *
-	     * TODO: actually remove this from the _callbacks dictionary instead
-	     * of binding an empty function
-	     *
-	     * the keycombo+action has to be exactly the same as
-	     * it was defined in the bind method
-	     *
-	     * @param {string|Array} keys
-	     * @param {string} action
-	     * @returns void
-	     */
-	    Mousetrap.prototype.unbind = function(keys, action) {
-	        var self = this;
-	        return self.bind.call(self, keys, function() {}, action);
-	    };
-	
-	    /**
-	     * triggers an event that has already been bound
-	     *
-	     * @param {string} keys
-	     * @param {string=} action
-	     * @returns void
-	     */
-	    Mousetrap.prototype.trigger = function(keys, action) {
-	        var self = this;
-	        if (self._directMap[keys + ':' + action]) {
-	            self._directMap[keys + ':' + action]({}, keys);
-	        }
-	        return self;
-	    };
-	
-	    /**
-	     * resets the library back to its initial state.  this is useful
-	     * if you want to clear out the current keyboard shortcuts and bind
-	     * new ones - for example if you switch to another page
-	     *
-	     * @returns void
-	     */
-	    Mousetrap.prototype.reset = function() {
-	        var self = this;
-	        self._callbacks = {};
-	        self._directMap = {};
-	        return self;
-	    };
-	
-	    /**
-	     * should we stop this event before firing off callbacks
-	     *
-	     * @param {Event} e
-	     * @param {Element} element
-	     * @return {boolean}
-	     */
-	    Mousetrap.prototype.stopCallback = function(e, element) {
-	        var self = this;
-	
-	        // if the element has the class "mousetrap" then no need to stop
-	        if ((' ' + element.className + ' ').indexOf(' mousetrap ') > -1) {
-	            return false;
-	        }
-	
-	        if (_belongsTo(element, self.target)) {
-	            return false;
-	        }
-	
-	        // stop for input, select, and textarea
-	        return element.tagName == 'INPUT' || element.tagName == 'SELECT' || element.tagName == 'TEXTAREA' || element.isContentEditable;
-	    };
-	
-	    /**
-	     * exposes _handleKey publicly so it can be overwritten by extensions
-	     */
-	    Mousetrap.prototype.handleKey = function() {
-	        var self = this;
-	        return self._handleKey.apply(self, arguments);
-	    };
-	
-	    /**
-	     * Init the global mousetrap functions
-	     *
-	     * This method is needed to allow the global mousetrap functions to work
-	     * now that mousetrap is a constructor function.
-	     */
-	    Mousetrap.init = function() {
-	        var documentMousetrap = Mousetrap(document);
-	        for (var method in documentMousetrap) {
-	            if (method.charAt(0) !== '_') {
-	                Mousetrap[method] = (function(method) {
-	                    return function() {
-	                        return documentMousetrap[method].apply(documentMousetrap, arguments);
-	                    };
-	                } (method));
-	            }
-	        }
-	    };
-	
-	    Mousetrap.init();
-	
-	    // expose mousetrap to the global object
-	    window.Mousetrap = Mousetrap;
-	
-	    // expose as a common js module
-	    if (typeof module !== 'undefined' && module.exports) {
-	        module.exports = Mousetrap;
-	    }
-	
-	    // expose mousetrap as an AMD module
-	    if (true) {
-	        !(__WEBPACK_AMD_DEFINE_RESULT__ = function() {
-	            return Mousetrap;
-	        }.call(exports, __webpack_require__, exports, module), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
-	    }
-	}) (window, document);
-
-
-/***/ },
-/* 12 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var baseAssign = __webpack_require__(18),
-	    createAssigner = __webpack_require__(19);
-	
-	/**
-	 * Assigns own enumerable properties of source object(s) to the destination
-	 * object. Subsequent sources overwrite property assignments of previous sources.
-	 * If `customizer` is provided it is invoked to produce the assigned values.
-	 * The `customizer` is bound to `thisArg` and invoked with five arguments:
-	 * (objectValue, sourceValue, key, object, source).
-	 *
-	 * @static
-	 * @memberOf _
-	 * @alias extend
-	 * @category Object
-	 * @param {Object} object The destination object.
-	 * @param {...Object} [sources] The source objects.
-	 * @param {Function} [customizer] The function to customize assigning values.
-	 * @param {*} [thisArg] The `this` binding of `customizer`.
-	 * @returns {Object} Returns `object`.
-	 * @example
-	 *
-	 * _.assign({ 'user': 'barney' }, { 'age': 40 }, { 'user': 'fred' });
-	 * // => { 'user': 'fred', 'age': 40 }
-	 *
-	 * // using a customizer callback
-	 * var defaults = _.partialRight(_.assign, function(value, other) {
-	 *   return typeof value == 'undefined' ? other : value;
-	 * });
-	 *
-	 * defaults({ 'user': 'barney' }, { 'age': 36 }, { 'user': 'fred' });
-	 * // => { 'user': 'barney', 'age': 36 }
-	 */
-	var assign = createAssigner(baseAssign);
-	
-	module.exports = assign;
-
-
-/***/ },
-/* 13 */
-/***/ function(module, exports, __webpack_require__) {
-
-	"use strict";
-	
-	var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
-	
-	var assign = _interopRequire(__webpack_require__(12));
-	
-	var Entity = _interopRequire(__webpack_require__(5));
-	
-	var Composite = __webpack_require__(8).Composite;
-	
-	var World = {};
-	
-	World.create = function () {
-	  var state = arguments[0] === undefined ? {} : arguments[0];
-	
-	  var world = Entity.create(assign({
-	    label: "TIWorld",
-	    gravity: { x: 0, y: 1 },
-	    bounds: {
-	      min: { x: 0, y: 0 },
-	      max: { x: 800, y: 600 }
-	    }
-	  }, state));
-	
-	  return world;
-	};
-	
-	World.allEntities = function (world) {
-	  return Composite.allComposites(world);
-	};
-	
-	module.exports = World;
-
-/***/ },
-/* 14 */
-/***/ function(module, exports, __webpack_require__) {
-
-	"use strict";
-	
-	var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
-	
-	var _Common = __webpack_require__(17);
-	
-	var requestAnimFrame = _Common.requestAnimFrame;
-	var cancelAnimFrame = _Common.cancelAnimFrame;
-	
-	var assign = _interopRequire(__webpack_require__(12));
-	
-	var FPS = 60;
-	var DELTA_SAMPLE_SIZE = FPS;
-	var DELTA = 1000 / FPS;
-	
-	var Runner = {};
-	
-	Runner.create = function (state, tick) {
-	    var preTick = arguments[2] === undefined ? function (runner) {
-	        return runner;
-	    } : arguments[2];
-	    return (function () {
-	        var counterTimestamp = 0;
-	        var frameCounter = 0;
-	        var deltaHistory = [];
-	        var timePrev = undefined;
-	        var timeScalePrev = 1;
-	
-	        var runner = assign({
-	            fps: FPS,
-	            timestamp: 0,
-	            delta: DELTA,
-	            correction: 1,
-	            deltaMin: 1000 / FPS,
-	            deltaMax: 1000 / (FPS * 0.5),
-	            timeScale: 1,
-	            isFixed: false,
-	            frameRequestId: 0,
-	            enabled: true,
-	            frameCount: 0
-	        }, state);
-	
-	        function step(time) {
-	            var delta = undefined;
-	            var correction = 1;
-	
-	            runner.frameRequestId = requestAnimFrame(step);
-	
-	            if (!runner.enabled) {
-	                return;
-	            }
-	
-	            preTick(runner);
-	
-	            if (runner.isFixed) {
-	                // fixed timestep
-	                delta = runner.delta;
-	            } else {
-	                // dynamic timestep based on wall clock between calls
-	                delta = time - timePrev || runner.delta;
-	                timePrev = time;
-	
-	                // optimistically filter delta over a few frames, to improve stability
-	                deltaHistory.push(delta);
-	                deltaHistory = deltaHistory.slice(-DELTA_SAMPLE_SIZE);
-	                delta = Math.min.apply(null, deltaHistory);
-	
-	                // limit delta
-	                delta = delta < runner.deltaMin ? runner.deltaMin : delta;
-	                delta = delta > runner.deltaMax ? runner.deltaMax : delta;
-	
-	                // time correction for delta
-	                correction = delta / runner.delta;
-	
-	                // update engine timing object
-	                runner.delta = delta;
-	            }
-	
-	            // time correction for time scaling
-	            if (timeScalePrev !== 0) {
-	                correction *= runner.timeScale / timeScalePrev;
-	            }
-	
-	            if (runner.timeScale === 0) {
-	                correction = 0;
-	            }
-	
-	            timeScalePrev = runner.timeScale;
-	
-	            // fps counter
-	            frameCounter += 1;
-	            if (time - counterTimestamp >= 1000) {
-	                runner.fps = frameCounter * ((time - counterTimestamp) / 1000);
-	                counterTimestamp = time;
-	                frameCounter = 0;
-	            }
-	
-	            runner.frameCount += 1;
-	
-	            tick(delta, correction, runner);
-	        }
-	
-	        runner.frameRequestId = requestAnimFrame(step);
-	
-	        return runner;
-	    })();
-	};
-	
-	Runner.destroy = function (runner) {
-	    cancelAnimFrame(runner.frameRequestId);
-	};
-	
-	module.exports = Runner;
-
-/***/ },
 /* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/**
-	 * The base implementation of `_.values` and `_.valuesIn` which creates an
-	 * array of `object` property values corresponding to the property names
-	 * returned by `keysFunc`.
-	 *
-	 * @private
-	 * @param {Object} object The object to query.
-	 * @param {Array} props The property names to get values for.
-	 * @returns {Object} Returns the array of property values.
-	 */
-	function baseValues(object, props) {
-	  var index = -1,
-	      length = props.length,
-	      result = Array(length);
-	
-	  while (++index < length) {
-	    result[index] = object[props[index]];
-	  }
-	  return result;
-	}
-	
-	module.exports = baseValues;
-
-
-/***/ },
-/* 16 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var isLength = __webpack_require__(20),
-	    isNative = __webpack_require__(21),
-	    isObject = __webpack_require__(22),
-	    shimKeys = __webpack_require__(23);
-	
-	/* Native method references for those with the same name as other `lodash` methods. */
-	var nativeKeys = isNative(nativeKeys = Object.keys) && nativeKeys;
-	
-	/**
-	 * Creates an array of the own enumerable property names of `object`.
-	 *
-	 * **Note:** Non-object values are coerced to objects. See the
-	 * [ES spec](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-object.keys)
-	 * for more details.
-	 *
-	 * @static
-	 * @memberOf _
-	 * @category Object
-	 * @param {Object} object The object to inspect.
-	 * @returns {Array} Returns the array of property names.
-	 * @example
-	 *
-	 * function Foo() {
-	 *   this.a = 1;
-	 *   this.b = 2;
-	 * }
-	 *
-	 * Foo.prototype.c = 3;
-	 *
-	 * _.keys(new Foo);
-	 * // => ['a', 'b'] (iteration order is not guaranteed)
-	 *
-	 * _.keys('hi');
-	 * // => ['0', '1']
-	 */
-	var keys = !nativeKeys ? shimKeys : function(object) {
-	  if (object) {
-	    var Ctor = object.constructor,
-	        length = object.length;
-	  }
-	  if ((typeof Ctor == 'function' && Ctor.prototype === object) ||
-	      (typeof object != 'function' && (length && isLength(length)))) {
-	    return shimKeys(object);
-	  }
-	  return isObject(object) ? nativeKeys(object) : [];
-	};
-	
-	module.exports = keys;
-
-
-/***/ },
-/* 17 */
-/***/ function(module, exports, __webpack_require__) {
-
-	"use strict";
-	
-	var Common = {};
-	
-	Common.now = function () {
-	    // http://stackoverflow.com/questions/221294/how-do-you-get-a-timestamp-in-javascript
-	    // https://gist.github.com/davidwaterston/2982531
-	    var perf = window.performance;
-	
-	    if (perf) {
-	        perf.now = perf.now || perf.webkitNow || perf.msNow || perf.oNow || perf.mozNow;
-	        return +perf.now();
-	    }
-	
-	    return +new Date();
-	};
-	
-	Common.requestAnimFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.msRequestAnimationFrame || function (cb) {
-	    window.setTimeout(function () {
-	        return cb(now());
-	    }, DELTA);
-	};
-	
-	Common.cancelAnimFrame = window.cancelAnimationFrame || window.mozCancelAnimationFrame || window.webkitCancelAnimationFrame || window.msCancelAnimationFrame;
-	
-	module.exports = Common;
-
-/***/ },
-/* 18 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var baseCopy = __webpack_require__(24),
-	    keys = __webpack_require__(16);
+	var baseCopy = __webpack_require__(26),
+	    keys = __webpack_require__(18);
 	
 	/**
 	 * The base implementation of `_.assign` without support for argument juggling,
@@ -10565,11 +10485,11 @@
 
 
 /***/ },
-/* 19 */
+/* 16 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var bindCallback = __webpack_require__(25),
-	    isIterateeCall = __webpack_require__(26);
+	var bindCallback = __webpack_require__(20),
+	    isIterateeCall = __webpack_require__(21);
 	
 	/**
 	 * Creates a function that assigns properties of source object(s) to a given
@@ -10620,7 +10540,203 @@
 
 
 /***/ },
+/* 17 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * The base implementation of `_.values` and `_.valuesIn` which creates an
+	 * array of `object` property values corresponding to the property names
+	 * returned by `keysFunc`.
+	 *
+	 * @private
+	 * @param {Object} object The object to query.
+	 * @param {Array} props The property names to get values for.
+	 * @returns {Object} Returns the array of property values.
+	 */
+	function baseValues(object, props) {
+	  var index = -1,
+	      length = props.length,
+	      result = Array(length);
+	
+	  while (++index < length) {
+	    result[index] = object[props[index]];
+	  }
+	  return result;
+	}
+	
+	module.exports = baseValues;
+
+
+/***/ },
+/* 18 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var isLength = __webpack_require__(22),
+	    isNative = __webpack_require__(23),
+	    isObject = __webpack_require__(24),
+	    shimKeys = __webpack_require__(25);
+	
+	/* Native method references for those with the same name as other `lodash` methods. */
+	var nativeKeys = isNative(nativeKeys = Object.keys) && nativeKeys;
+	
+	/**
+	 * Creates an array of the own enumerable property names of `object`.
+	 *
+	 * **Note:** Non-object values are coerced to objects. See the
+	 * [ES spec](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-object.keys)
+	 * for more details.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @category Object
+	 * @param {Object} object The object to inspect.
+	 * @returns {Array} Returns the array of property names.
+	 * @example
+	 *
+	 * function Foo() {
+	 *   this.a = 1;
+	 *   this.b = 2;
+	 * }
+	 *
+	 * Foo.prototype.c = 3;
+	 *
+	 * _.keys(new Foo);
+	 * // => ['a', 'b'] (iteration order is not guaranteed)
+	 *
+	 * _.keys('hi');
+	 * // => ['0', '1']
+	 */
+	var keys = !nativeKeys ? shimKeys : function(object) {
+	  if (object) {
+	    var Ctor = object.constructor,
+	        length = object.length;
+	  }
+	  if ((typeof Ctor == 'function' && Ctor.prototype === object) ||
+	      (typeof object != 'function' && (length && isLength(length)))) {
+	    return shimKeys(object);
+	  }
+	  return isObject(object) ? nativeKeys(object) : [];
+	};
+	
+	module.exports = keys;
+
+
+/***/ },
+/* 19 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	
+	var Common = {};
+	
+	Common.now = function () {
+	    // http://stackoverflow.com/questions/221294/how-do-you-get-a-timestamp-in-javascript
+	    // https://gist.github.com/davidwaterston/2982531
+	    var perf = window.performance;
+	
+	    if (perf) {
+	        perf.now = perf.now || perf.webkitNow || perf.msNow || perf.oNow || perf.mozNow;
+	        return +perf.now();
+	    }
+	
+	    return +new Date();
+	};
+	
+	Common.requestAnimFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.msRequestAnimationFrame || function (cb) {
+	    window.setTimeout(function () {
+	        return cb(now());
+	    }, DELTA);
+	};
+	
+	Common.cancelAnimFrame = window.cancelAnimationFrame || window.mozCancelAnimationFrame || window.webkitCancelAnimationFrame || window.msCancelAnimationFrame;
+	
+	module.exports = Common;
+
+/***/ },
 /* 20 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var identity = __webpack_require__(27);
+	
+	/**
+	 * A specialized version of `baseCallback` which only supports `this` binding
+	 * and specifying the number of arguments to provide to `func`.
+	 *
+	 * @private
+	 * @param {Function} func The function to bind.
+	 * @param {*} thisArg The `this` binding of `func`.
+	 * @param {number} [argCount] The number of arguments to provide to `func`.
+	 * @returns {Function} Returns the callback.
+	 */
+	function bindCallback(func, thisArg, argCount) {
+	  if (typeof func != 'function') {
+	    return identity;
+	  }
+	  if (typeof thisArg == 'undefined') {
+	    return func;
+	  }
+	  switch (argCount) {
+	    case 1: return function(value) {
+	      return func.call(thisArg, value);
+	    };
+	    case 3: return function(value, index, collection) {
+	      return func.call(thisArg, value, index, collection);
+	    };
+	    case 4: return function(accumulator, value, index, collection) {
+	      return func.call(thisArg, accumulator, value, index, collection);
+	    };
+	    case 5: return function(value, other, key, object, source) {
+	      return func.call(thisArg, value, other, key, object, source);
+	    };
+	  }
+	  return function() {
+	    return func.apply(thisArg, arguments);
+	  };
+	}
+	
+	module.exports = bindCallback;
+
+
+/***/ },
+/* 21 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var isIndex = __webpack_require__(28),
+	    isLength = __webpack_require__(22),
+	    isObject = __webpack_require__(24);
+	
+	/**
+	 * Checks if the provided arguments are from an iteratee call.
+	 *
+	 * @private
+	 * @param {*} value The potential iteratee value argument.
+	 * @param {*} index The potential iteratee index or key argument.
+	 * @param {*} object The potential iteratee object argument.
+	 * @returns {boolean} Returns `true` if the arguments are from an iteratee call, else `false`.
+	 */
+	function isIterateeCall(value, index, object) {
+	  if (!isObject(object)) {
+	    return false;
+	  }
+	  var type = typeof index;
+	  if (type == 'number') {
+	    var length = object.length,
+	        prereq = isLength(length) && isIndex(index, length);
+	  } else {
+	    prereq = type == 'string' && index in object;
+	  }
+	  if (prereq) {
+	    var other = object[index];
+	    return value === value ? (value === other) : (other !== other);
+	  }
+	  return false;
+	}
+	
+	module.exports = isIterateeCall;
+
+
+/***/ },
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -10646,11 +10762,11 @@
 
 
 /***/ },
-/* 21 */
+/* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var escapeRegExp = __webpack_require__(32),
-	    isObjectLike = __webpack_require__(33);
+	var escapeRegExp = __webpack_require__(29),
+	    isObjectLike = __webpack_require__(30);
 	
 	/** `Object#toString` result references. */
 	var funcTag = '[object Function]';
@@ -10706,7 +10822,7 @@
 
 
 /***/ },
-/* 22 */
+/* 24 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -10740,15 +10856,15 @@
 
 
 /***/ },
-/* 23 */
+/* 25 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var isArguments = __webpack_require__(27),
-	    isArray = __webpack_require__(28),
-	    isIndex = __webpack_require__(29),
-	    isLength = __webpack_require__(20),
-	    keysIn = __webpack_require__(30),
-	    support = __webpack_require__(31);
+	var isArguments = __webpack_require__(31),
+	    isArray = __webpack_require__(32),
+	    isIndex = __webpack_require__(28),
+	    isLength = __webpack_require__(22),
+	    keysIn = __webpack_require__(33),
+	    support = __webpack_require__(34);
 	
 	/** Used for native method references. */
 	var objectProto = Object.prototype;
@@ -10788,7 +10904,7 @@
 
 
 /***/ },
-/* 24 */
+/* 26 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -10819,94 +10935,120 @@
 
 
 /***/ },
-/* 25 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var identity = __webpack_require__(34);
-	
-	/**
-	 * A specialized version of `baseCallback` which only supports `this` binding
-	 * and specifying the number of arguments to provide to `func`.
-	 *
-	 * @private
-	 * @param {Function} func The function to bind.
-	 * @param {*} thisArg The `this` binding of `func`.
-	 * @param {number} [argCount] The number of arguments to provide to `func`.
-	 * @returns {Function} Returns the callback.
-	 */
-	function bindCallback(func, thisArg, argCount) {
-	  if (typeof func != 'function') {
-	    return identity;
-	  }
-	  if (typeof thisArg == 'undefined') {
-	    return func;
-	  }
-	  switch (argCount) {
-	    case 1: return function(value) {
-	      return func.call(thisArg, value);
-	    };
-	    case 3: return function(value, index, collection) {
-	      return func.call(thisArg, value, index, collection);
-	    };
-	    case 4: return function(accumulator, value, index, collection) {
-	      return func.call(thisArg, accumulator, value, index, collection);
-	    };
-	    case 5: return function(value, other, key, object, source) {
-	      return func.call(thisArg, value, other, key, object, source);
-	    };
-	  }
-	  return function() {
-	    return func.apply(thisArg, arguments);
-	  };
-	}
-	
-	module.exports = bindCallback;
-
-
-/***/ },
-/* 26 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var isIndex = __webpack_require__(29),
-	    isLength = __webpack_require__(20),
-	    isObject = __webpack_require__(22);
-	
-	/**
-	 * Checks if the provided arguments are from an iteratee call.
-	 *
-	 * @private
-	 * @param {*} value The potential iteratee value argument.
-	 * @param {*} index The potential iteratee index or key argument.
-	 * @param {*} object The potential iteratee object argument.
-	 * @returns {boolean} Returns `true` if the arguments are from an iteratee call, else `false`.
-	 */
-	function isIterateeCall(value, index, object) {
-	  if (!isObject(object)) {
-	    return false;
-	  }
-	  var type = typeof index;
-	  if (type == 'number') {
-	    var length = object.length,
-	        prereq = isLength(length) && isIndex(index, length);
-	  } else {
-	    prereq = type == 'string' && index in object;
-	  }
-	  if (prereq) {
-	    var other = object[index];
-	    return value === value ? (value === other) : (other !== other);
-	  }
-	  return false;
-	}
-	
-	module.exports = isIterateeCall;
-
-
-/***/ },
 /* 27 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var isLength = __webpack_require__(20),
-	    isObjectLike = __webpack_require__(33);
+	/**
+	 * This method returns the first argument provided to it.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @category Utility
+	 * @param {*} value Any value.
+	 * @returns {*} Returns `value`.
+	 * @example
+	 *
+	 * var object = { 'user': 'fred' };
+	 *
+	 * _.identity(object) === object;
+	 * // => true
+	 */
+	function identity(value) {
+	  return value;
+	}
+	
+	module.exports = identity;
+
+
+/***/ },
+/* 28 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * Used as the [maximum length](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-number.max_safe_integer)
+	 * of an array-like value.
+	 */
+	var MAX_SAFE_INTEGER = Math.pow(2, 53) - 1;
+	
+	/**
+	 * Checks if `value` is a valid array-like index.
+	 *
+	 * @private
+	 * @param {*} value The value to check.
+	 * @param {number} [length=MAX_SAFE_INTEGER] The upper bounds of a valid index.
+	 * @returns {boolean} Returns `true` if `value` is a valid index, else `false`.
+	 */
+	function isIndex(value, length) {
+	  value = +value;
+	  length = length == null ? MAX_SAFE_INTEGER : length;
+	  return value > -1 && value % 1 == 0 && value < length;
+	}
+	
+	module.exports = isIndex;
+
+
+/***/ },
+/* 29 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseToString = __webpack_require__(35);
+	
+	/**
+	 * Used to match `RegExp` [special characters](http://www.regular-expressions.info/characters.html#special).
+	 * In addition to special characters the forward slash is escaped to allow for
+	 * easier `eval` use and `Function` compilation.
+	 */
+	var reRegExpChars = /[.*+?^${}()|[\]\/\\]/g,
+	    reHasRegExpChars = RegExp(reRegExpChars.source);
+	
+	/**
+	 * Escapes the `RegExp` special characters "\", "/", "^", "$", ".", "|", "?",
+	 * "*", "+", "(", ")", "[", "]", "{" and "}" in `string`.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @category String
+	 * @param {string} [string=''] The string to escape.
+	 * @returns {string} Returns the escaped string.
+	 * @example
+	 *
+	 * _.escapeRegExp('[lodash](https://lodash.com/)');
+	 * // => '\[lodash\]\(https:\/\/lodash\.com\/\)'
+	 */
+	function escapeRegExp(string) {
+	  string = baseToString(string);
+	  return (string && reHasRegExpChars.test(string))
+	    ? string.replace(reRegExpChars, '\\$&')
+	    : string;
+	}
+	
+	module.exports = escapeRegExp;
+
+
+/***/ },
+/* 30 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * Checks if `value` is object-like.
+	 *
+	 * @private
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
+	 */
+	function isObjectLike(value) {
+	  return !!value && typeof value == 'object';
+	}
+	
+	module.exports = isObjectLike;
+
+
+/***/ },
+/* 31 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var isLength = __webpack_require__(22),
+	    isObjectLike = __webpack_require__(30);
 	
 	/** `Object#toString` result references. */
 	var argsTag = '[object Arguments]';
@@ -10945,12 +11087,12 @@
 
 
 /***/ },
-/* 28 */
+/* 32 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var isLength = __webpack_require__(20),
-	    isNative = __webpack_require__(21),
-	    isObjectLike = __webpack_require__(33);
+	var isLength = __webpack_require__(22),
+	    isNative = __webpack_require__(23),
+	    isObjectLike = __webpack_require__(30);
 	
 	/** `Object#toString` result references. */
 	var arrayTag = '[object Array]';
@@ -10991,42 +11133,15 @@
 
 
 /***/ },
-/* 29 */
+/* 33 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/**
-	 * Used as the [maximum length](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-number.max_safe_integer)
-	 * of an array-like value.
-	 */
-	var MAX_SAFE_INTEGER = Math.pow(2, 53) - 1;
-	
-	/**
-	 * Checks if `value` is a valid array-like index.
-	 *
-	 * @private
-	 * @param {*} value The value to check.
-	 * @param {number} [length=MAX_SAFE_INTEGER] The upper bounds of a valid index.
-	 * @returns {boolean} Returns `true` if `value` is a valid index, else `false`.
-	 */
-	function isIndex(value, length) {
-	  value = +value;
-	  length = length == null ? MAX_SAFE_INTEGER : length;
-	  return value > -1 && value % 1 == 0 && value < length;
-	}
-	
-	module.exports = isIndex;
-
-
-/***/ },
-/* 30 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var isArguments = __webpack_require__(27),
-	    isArray = __webpack_require__(28),
-	    isIndex = __webpack_require__(29),
-	    isLength = __webpack_require__(20),
-	    isObject = __webpack_require__(22),
-	    support = __webpack_require__(31);
+	var isArguments = __webpack_require__(31),
+	    isArray = __webpack_require__(32),
+	    isIndex = __webpack_require__(28),
+	    isLength = __webpack_require__(22),
+	    isObject = __webpack_require__(24),
+	    support = __webpack_require__(34);
 	
 	/** Used for native method references. */
 	var objectProto = Object.prototype;
@@ -11089,7 +11204,7 @@
 
 
 /***/ },
-/* 31 */
+/* 34 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {/** Used for native method references. */
@@ -11164,88 +11279,6 @@
 	module.exports = support;
 	
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
-
-/***/ },
-/* 32 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var baseToString = __webpack_require__(35);
-	
-	/**
-	 * Used to match `RegExp` [special characters](http://www.regular-expressions.info/characters.html#special).
-	 * In addition to special characters the forward slash is escaped to allow for
-	 * easier `eval` use and `Function` compilation.
-	 */
-	var reRegExpChars = /[.*+?^${}()|[\]\/\\]/g,
-	    reHasRegExpChars = RegExp(reRegExpChars.source);
-	
-	/**
-	 * Escapes the `RegExp` special characters "\", "/", "^", "$", ".", "|", "?",
-	 * "*", "+", "(", ")", "[", "]", "{" and "}" in `string`.
-	 *
-	 * @static
-	 * @memberOf _
-	 * @category String
-	 * @param {string} [string=''] The string to escape.
-	 * @returns {string} Returns the escaped string.
-	 * @example
-	 *
-	 * _.escapeRegExp('[lodash](https://lodash.com/)');
-	 * // => '\[lodash\]\(https:\/\/lodash\.com\/\)'
-	 */
-	function escapeRegExp(string) {
-	  string = baseToString(string);
-	  return (string && reHasRegExpChars.test(string))
-	    ? string.replace(reRegExpChars, '\\$&')
-	    : string;
-	}
-	
-	module.exports = escapeRegExp;
-
-
-/***/ },
-/* 33 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/**
-	 * Checks if `value` is object-like.
-	 *
-	 * @private
-	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
-	 */
-	function isObjectLike(value) {
-	  return !!value && typeof value == 'object';
-	}
-	
-	module.exports = isObjectLike;
-
-
-/***/ },
-/* 34 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/**
-	 * This method returns the first argument provided to it.
-	 *
-	 * @static
-	 * @memberOf _
-	 * @category Utility
-	 * @param {*} value Any value.
-	 * @returns {*} Returns `value`.
-	 * @example
-	 *
-	 * var object = { 'user': 'fred' };
-	 *
-	 * _.identity(object) === object;
-	 * // => true
-	 */
-	function identity(value) {
-	  return value;
-	}
-	
-	module.exports = identity;
-
 
 /***/ },
 /* 35 */
