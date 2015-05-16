@@ -7,7 +7,7 @@ config.output = {
 config.externals = undefined;
 config.plugins.push(
   new webpack.NormalModuleReplacementPlugin(
-    /^react-hotkeys$/,
+    /^titan-2d$/,
     '../../lib/index'
   )
 )

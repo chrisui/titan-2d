@@ -33,6 +33,7 @@ module.exports = {
   resolveLoader: {
     modulesDirectories: ['node_modules']
   },
+  devtool: 'source-map',
   resolve: {
     root: [libDir],
     extensions: ['', '.js', '.jsx'],

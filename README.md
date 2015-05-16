@@ -47,7 +47,16 @@ To aid in onboarding the framework should expose first-class support for common 
 	- The idea of macros and language transpilation is not out the question in the long run if it is super easy to run (babel plugins???)
 - Don't reinvent the wheel - reuse what is available
 	- Reusing what is available can help develop a solid plugin spec to allow for even more flexibility down the line
+- 2D focus - no doubt some scope later down the line for 2.5d and *then* taking the concepts and structure of the engine and making a `titan-3d`
 
 Inspiration
 -----------
-- Impact JS for it's initial developer accessibility
+- Impact JS (and impact++) for it's initial developer accessibility
+- Ori and the blind forest for an insanely good target showcase
+
+Some vague ideas
+----------------
+- Service driven - large global registry of services which can be accessed
+  - Ie. Input service, Physics service, Render service, UI service etc.
+  - Allows easy access and user overrides of core services
+

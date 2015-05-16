@@ -1,14 +1,21 @@
-import {Engine, World, Bodies, RenderPixi, Composites, Constraint, Common} from 'matter';
+ import Engine from '../../lib/Engine';
+ import Entity from '../../lib/Entity';
+ import Input from '../../lib/Input';
 
-export function render(renderTo) {
+ import {World, Bodies, Body, Vector} from 'matter';
 
-  // create a Matter.js engine
-  var engine = Engine.create({
+ import Mousetrap from 'mousetrap';
+ import values from 'lodash/object/values';
+
+ export function render(renderTo) {
+
+  const engine = Engine.create({
     render: {
-        element: renderTo,
-        controller: RenderPixi
+      element: renderTo
     }
   });
+
+  const player = Bodies.circle(100, 100, 30, {restitution: 0.6, friction: 0.1});
 
   var offset = 5;
   World.add(engine.world, [
@@ -16,34 +23,44 @@ export function render(renderTo) {
       Bodies.rectangle(400, 600 + offset, 800.5 + 2 * offset, 50.5, { isStatic: true }),
       Bodies.rectangle(800 + offset, 300, 50.5, 600.5 + 2 * offset, { isStatic: true }),
       Bodies.rectangle(-offset, 300, 50.5, 600.5 + 2 * offset, { isStatic: true })
-  ]);  
+  ]);
 
-  var rows = 10,
-      yy = 600 - 21 - 40 * rows;
+  World.add(engine.world, [player]);
 
-  var stack = Composites.stack(400, yy, 5, rows, 0, 0, function(x, y, column, row) {
-      return Bodies.rectangle(x, y, 40, 40, { friction: 0.9, restitution: 0.1 });
+  const jump = Input.create(null, [Input.KEYBOARD_UP, Input.GAMEPAD_A]);
+  const runRight = Input.create(null, [Input.KEYBOARD_RIGHT, Input.GAMEPAD_L_RIGHT]);
+  const runLeft = Input.create(null, [Input.KEYBOARD_LEFT, Input.GAMEPAD_L_LEFT]);
+
+  Engine.run(engine, function() {
+
+    if (jump.value && player.velocity.y < 10) {
+      Body.applyForce(player,
+        Vector.sub(player.position, {x: player.position.y, y: player.position.y + 15}), {x: 0, y: -0.02});
+    }
+
+    if (runRight.value && player.velocity.x < 10) {
+      Body.applyForce(player,
+        Vector.sub(player.position, {x: player.position.x - 15, y: player.position.y}), {x: 0.01, y: 0});
+    }
+
+    if (runLeft.value && player.velocity.x > -10) {
+      Body.applyForce(player,
+        Vector.sub(player.position, {x: player.position.x + 15, y: player.position.y}), {x: -0.01, y: 0});
+    }
+
+    if (engine.runner.frameCount % 20 === 0) {
+
+      const gamepads = navigator.getGamepads();
+      values(gamepads).filter(pad => pad && pad.axes).forEach((pad, i) => console.log(i, pad.axes[0], pad.axes[1], pad.axes[2], pad.axes[3]));
+      //values(gamepads).filter(pad => pad && pad.buttons).forEach((pad, padI) => pad.buttons.forEach((but, butI) => console.log(padI, butI, but.pressed, but.value)));
+    }
+
   });
 
-  World.add(engine.world, stack);
-
-  var ball = Bodies.circle(100, 400, 50, { density: 0.07, frictionAir: 0.001});
-
-  World.add(engine.world, ball);
-  World.add(engine.world, Constraint.create({
-      pointA: { x: 300, y: 100 },
-      bodyB: ball
-  }));
-
-
-  var balls = Composites.stack(100, 50, 10, 3, 10, 10, function(x, y, column, row) {
-      return Bodies.circle(x, y, Common.random(15, 30), { restitution: 0.6, friction: 0.1 });
-  });
-
-  World.add(engine.world, balls);
-
-  // run the engine
-  Engine.run(engine);
+  // debug
+  window.engine = engine;
+  window.world = engine.world;
+  window.player = player;
 
 }
 
