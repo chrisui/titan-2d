@@ -13,11 +13,13 @@
     "css-loader": "^0.12.0",
     "prompt": "^0.2.14",
     "style-loader": "^0.12.1",
-    "webpack": "^1.7.3"
+    "webpack": "^1.7.3",
+    "mathjs": "~1.6.0",
+    "lodash": "~3.7.0"
   },
   "dependencies": {
     "matter-js": "liabru/matter-js",
-    "pixi.js": "GoodBoyDigital/pixi.js"
+    "pixi.js": "GoodBoyDigital/pixi.js#4318437cf1c9074c4da9289f30a2cf85e23d34ae"
   },
   "peerDependencies": {},
   "scripts": {

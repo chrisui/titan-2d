@@ -10,6 +10,6 @@ config.plugins.push(
     /^titan-2d$/,
     '../../lib/index'
   )
-)
+);
 
 module.exports = config;

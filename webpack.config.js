@@ -5,6 +5,7 @@ var libDir = __dirname + '/lib';
 var projectVar = pkg.globalExport;
 var ENV = process.env.NODE_ENV;
 var COMPRESS = process.env.COMPRESS;
+var SOURCEMAPS = process.env.SOURCEMAPS;
 
 var plugins = [
   new webpack.DefinePlugin({
@@ -21,7 +22,7 @@ if (COMPRESS) {
   );
 }
 
-module.exports = {
+exports = module.exports = {
   entry: './lib/index',
   output: {
     library: projectVar,
@@ -40,9 +41,13 @@ module.exports = {
     modulesDirectories: ['modules', 'node_modules'],
     alias: {
       'matter': 'matter-js/build/matter',
-      //'pixi': 'pixi.js/bin/pixi'
-      'pixi': 'pixi-2/pixi'
+      'pixi': 'pixi.js/bin/pixi'
+      //'pixi': 'pixi-2/pixi'
     }
   },
   plugins: plugins
 };
+
+if (SOURCEMAPS) {
+  exports.devtool = 'source-map';
+}
