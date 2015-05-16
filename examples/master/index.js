@@ -4,7 +4,6 @@
 
  import {World, Bodies, Body, Vector} from 'matter';
 
- import Mousetrap from 'mousetrap';
  import values from 'lodash/object/values';
 
  export function render(renderTo) {
